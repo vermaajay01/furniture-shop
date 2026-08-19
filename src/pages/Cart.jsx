@@ -1,0 +1,582 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  ArrowLeft,
+  Minus,
+  Plus,
+  Trash2,
+  ShoppingCart,
+  MessageCircle,
+  User,
+  Phone,
+  MapPin,
+} from "lucide-react";
+
+import {
+  doc,
+  getDoc,
+  addDoc,
+  collection,
+  serverTimestamp,
+} from "firebase/firestore";
+
+import { db } from "../firebase/firebase";
+import { useCart } from "../context/CartContext";
+
+function Cart() {
+  const {
+    cartItems,
+    cartTotal,
+    increaseQuantity,
+    decreaseQuantity,
+    removeFromCart,
+    clearCart,
+  } = useCart();
+
+  const [settings, setSettings] = useState({
+    whatsapp: "919596492640",
+    shopName: "हरि ॐ Furniture House",
+  });
+
+  const [customer, setCustomer] = useState({
+    name: "",
+    phone: "",
+    address: "",
+  });
+
+  const [sending, setSending] = useState(false);
+
+  // ======================================================
+  // LOAD WEBSITE SETTINGS
+  // ======================================================
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const settingsRef = doc(
+          db,
+          "settings",
+          "website"
+        );
+
+        const snapshot = await getDoc(
+          settingsRef
+        );
+
+        if (snapshot.exists()) {
+          setSettings((previous) => ({
+            ...previous,
+            ...snapshot.data(),
+          }));
+        }
+      } catch (error) {
+        console.error(
+          "Unable to load settings:",
+          error
+        );
+      }
+    };
+
+    loadSettings();
+  }, []);
+
+  // ======================================================
+  // CUSTOMER DETAILS
+  // ======================================================
+
+  const handleCustomerChange = (e) => {
+    const { name, value } = e.target;
+
+    setCustomer((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+  };
+
+  // ======================================================
+  // SEND ORDER
+  // ======================================================
+
+  const sendOrderToWhatsApp = async (e) => {
+    e.preventDefault();
+
+    if (!cartItems.length) {
+      return;
+    }
+
+    if (!customer.name.trim()) {
+      alert("Please enter your name.");
+      return;
+    }
+
+    if (!customer.phone.trim()) {
+      alert("Please enter your phone number.");
+      return;
+    }
+
+    if (!customer.address.trim()) {
+      alert("Please enter your delivery address.");
+      return;
+    }
+
+    const whatsappNumber = String(
+      settings.whatsapp || ""
+    ).replace(/\D/g, "");
+
+    if (!whatsappNumber) {
+      alert(
+        "Shop WhatsApp number is not configured."
+      );
+      return;
+    }
+
+    try {
+      setSending(true);
+
+      // ==================================================
+      // PREPARE ORDER ITEMS
+      // ==================================================
+
+      const orderItems = cartItems.map((item) => ({
+        productId: item.id,
+        name: item.name,
+        category: item.category || "Furniture",
+        material: item.material || "",
+        image: item.image || "",
+        price: Number(item.price || 0),
+        quantity: Number(item.quantity || 1),
+        itemTotal:
+          Number(item.price || 0) *
+          Number(item.quantity || 1),
+      }));
+
+      // ==================================================
+      // SAVE ORDER TO FIRESTORE
+      // ==================================================
+
+      const orderData = {
+        customer: {
+          name: customer.name.trim(),
+          phone: customer.phone.trim(),
+          address: customer.address.trim(),
+        },
+
+        items: orderItems,
+
+        total: Number(cartTotal),
+
+        status: "new",
+
+        createdAt: serverTimestamp(),
+
+        source: "website",
+      };
+
+      const orderRef = await addDoc(
+        collection(db, "orders"),
+        orderData
+      );
+
+      // ==================================================
+      // WHATSAPP MESSAGE
+      // ==================================================
+
+      let message = `Hello ${settings.shopName} 👋
+
+I would like to place an order/enquiry.
+
+ORDER ID:
+${orderRef.id}
+
+CUSTOMER DETAILS
+----------------
+Name: ${customer.name}
+Phone: ${customer.phone}
+Address: ${customer.address}
+
+ORDER ITEMS
+-----------`;
+
+      orderItems.forEach((item, index) => {
+        message += `
+
+${index + 1}. ${item.name}
+Category: ${item.category}
+Material: ${
+          item.material || "Not specified"
+        }
+Price: ₹${item.price.toLocaleString("en-IN")}
+Quantity: ${item.quantity}
+Item Total: ₹${item.itemTotal.toLocaleString(
+          "en-IN"
+        )}`;
+      });
+
+      message += `
+
+----------------
+TOTAL: ₹${Number(
+        cartTotal
+      ).toLocaleString("en-IN")}
+
+Order ID: ${orderRef.id}
+
+Please contact me regarding availability,
+delivery and final pricing.
+
+Thank you.`;
+
+      const whatsappURL =
+        `https://wa.me/${whatsappNumber}?text=` +
+        encodeURIComponent(message);
+
+      window.open(
+        whatsappURL,
+        "_blank",
+        "noopener,noreferrer"
+      );
+
+      alert(
+        "Order saved successfully. WhatsApp will now open."
+      );
+
+      clearCart();
+
+      setCustomer({
+        name: "",
+        phone: "",
+        address: "",
+      });
+    } catch (error) {
+      console.error(
+        "Order creation failed:",
+        error
+      );
+
+      alert(
+        "Unable to save your order. Please try again."
+      );
+    } finally {
+      setSending(false);
+    }
+  };
+
+  // ======================================================
+  // EMPTY CART
+  // ======================================================
+
+  if (!cartItems.length) {
+    return (
+      <div className="min-h-screen bg-[#F8F1E7] px-6 py-16">
+        <div className="mx-auto max-w-3xl">
+          <div className="bg-white px-6 py-16 text-center shadow-sm">
+
+            <ShoppingCart
+              size={55}
+              className="mx-auto text-[#B8863B]"
+            />
+
+            <h1 className="mt-6 text-3xl font-bold text-[#6B1E1E]">
+              Your Cart is Empty
+            </h1>
+
+            <p className="mt-3 text-gray-500">
+              Add some furniture to your cart
+              and send your enquiry directly
+              to our WhatsApp.
+            </p>
+
+            <Link
+              to="/shop"
+              className="mt-7 inline-flex items-center gap-2 bg-[#6B1E1E] px-7 py-3.5 font-semibold text-white transition hover:bg-[#8B2E2E]"
+            >
+              <ArrowLeft size={18} />
+              Continue Shopping
+            </Link>
+
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ======================================================
+  // CART PAGE
+  // ======================================================
+
+  return (
+    <div className="min-h-screen bg-[#F8F1E7] px-6 py-12">
+
+      <div className="mx-auto max-w-7xl">
+
+        <div className="mb-8">
+
+          <Link
+            to="/shop"
+            className="inline-flex items-center gap-2 text-sm font-medium text-[#8B2E2E]"
+          >
+            <ArrowLeft size={17} />
+            Continue Shopping
+          </Link>
+
+          <h1 className="mt-5 text-4xl font-bold text-[#6B1E1E]">
+            Your Cart
+          </h1>
+
+          <p className="mt-2 text-gray-500">
+            Review your furniture and send
+            your enquiry directly to our shop.
+          </p>
+
+        </div>
+
+        <div className="grid gap-8 lg:grid-cols-[1fr_400px]">
+
+          {/* CART ITEMS */}
+
+          <div className="space-y-4">
+
+            {cartItems.map((item) => {
+              const itemTotal =
+                Number(item.price || 0) *
+                item.quantity;
+
+              return (
+                <div
+                  key={item.id}
+                  className="flex flex-col gap-5 bg-white p-5 shadow-sm sm:flex-row"
+                >
+
+                  <Link
+                    to={`/product/${item.id}`}
+                    className="h-32 w-full shrink-0 overflow-hidden bg-gray-100 sm:w-32"
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="h-full w-full object-cover"
+                    />
+                  </Link>
+
+                  <div className="flex flex-1 flex-col justify-between">
+
+                    <div>
+
+                      <p className="text-xs uppercase tracking-[0.2em] text-[#8B2E2E]">
+                        {item.category}
+                      </p>
+
+                      <h2 className="mt-1 text-lg font-bold text-[#2B1714]">
+                        {item.name}
+                      </h2>
+
+                      {item.material && (
+                        <p className="mt-1 text-sm text-gray-500">
+                          {item.material}
+                        </p>
+                      )}
+
+                      <p className="mt-3 font-semibold text-[#8B2E2E]">
+                        ₹
+                        {Number(
+                          item.price || 0
+                        ).toLocaleString("en-IN")}
+                      </p>
+
+                    </div>
+
+                    <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+
+                      <div className="flex items-center border border-gray-200">
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            decreaseQuantity(item.id)
+                          }
+                          className="flex h-9 w-9 items-center justify-center hover:bg-[#F8F1E7]"
+                        >
+                          <Minus size={16} />
+                        </button>
+
+                        <span className="flex h-9 min-w-10 items-center justify-center border-x border-gray-200 text-sm font-semibold">
+                          {item.quantity}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            increaseQuantity(item.id)
+                          }
+                          className="flex h-9 w-9 items-center justify-center hover:bg-[#F8F1E7]"
+                        >
+                          <Plus size={16} />
+                        </button>
+
+                      </div>
+
+                      <div className="flex items-center gap-5">
+
+                        <p className="font-bold text-[#6B1E1E]">
+                          ₹
+                          {itemTotal.toLocaleString(
+                            "en-IN"
+                          )}
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            removeFromCart(item.id)
+                          }
+                          className="text-gray-400 hover:text-red-600"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                </div>
+              );
+            })}
+
+          </div>
+
+          {/* ORDER FORM */}
+
+          <div className="h-fit bg-white p-6 shadow-sm lg:sticky lg:top-28">
+
+            <h2 className="text-xl font-bold text-[#6B1E1E]">
+              Order Details
+            </h2>
+
+            <form
+              onSubmit={sendOrderToWhatsApp}
+              className="mt-6 space-y-4"
+            >
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold">
+                  Your Name *
+                </label>
+
+                <div className="relative">
+                  <User
+                    size={18}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  />
+
+                  <input
+                    type="text"
+                    name="name"
+                    value={customer.name}
+                    onChange={handleCustomerChange}
+                    placeholder="Enter your name"
+                    className="w-full border border-gray-200 py-3 pl-10 pr-3 text-sm outline-none focus:border-[#8B2E2E]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold">
+                  Phone Number *
+                </label>
+
+                <div className="relative">
+                  <Phone
+                    size={18}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  />
+
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={customer.phone}
+                    onChange={handleCustomerChange}
+                    placeholder="Enter phone number"
+                    className="w-full border border-gray-200 py-3 pl-10 pr-3 text-sm outline-none focus:border-[#8B2E2E]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold">
+                  Address *
+                </label>
+
+                <div className="relative">
+                  <MapPin
+                    size={18}
+                    className="absolute left-3 top-3 text-gray-400"
+                  />
+
+                  <textarea
+                    name="address"
+                    value={customer.address}
+                    onChange={handleCustomerChange}
+                    rows="4"
+                    placeholder="Enter delivery address"
+                    className="w-full resize-none border border-gray-200 py-3 pl-10 pr-3 text-sm outline-none focus:border-[#8B2E2E]"
+                  />
+                </div>
+              </div>
+
+              <div className="border-t border-gray-100 pt-5">
+
+                <div className="flex items-center justify-between">
+
+                  <span className="text-gray-500">
+                    Total
+                  </span>
+
+                  <span className="text-2xl font-bold text-[#6B1E1E]">
+                    ₹
+                    {cartTotal.toLocaleString("en-IN")}
+                  </span>
+
+                </div>
+
+              </div>
+
+              <button
+                type="submit"
+                disabled={sending}
+                className="flex w-full items-center justify-center gap-2 bg-[#6B1E1E] px-6 py-4 font-semibold text-white transition hover:bg-[#8B2E2E] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <MessageCircle size={21} />
+
+                {sending
+                  ? "Saving Order..."
+                  : "Send Order on WhatsApp"}
+              </button>
+
+              <p className="text-center text-xs leading-5 text-gray-400">
+                Your order will be saved securely
+                and sent to our WhatsApp.
+              </p>
+
+            </form>
+
+            <button
+              type="button"
+              onClick={clearCart}
+              className="mt-5 w-full text-sm font-medium text-gray-400 hover:text-red-600"
+            >
+              Clear Cart
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
+
+export default Cart;
