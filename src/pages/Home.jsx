@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import {
   ArrowRight,
+  ArrowUp,
   Loader2,
   Sofa,
   BedDouble,
@@ -25,22 +26,38 @@ import {
 } from "firebase/firestore";
 
 import { db } from "../firebase/firebase";
+
 import ProductCard from "../components/ProductCard";
+import OfferBanner from "../components/OfferBanner";
+
 import { trackVisitor } from "../firebase/visitorTracking";
 
 function Home() {
-  const [featuredProducts, setFeaturedProducts] = useState([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [featuredProducts, setFeaturedProducts] =
+    useState([]);
+
+  const [loadingProducts, setLoadingProducts] =
+    useState(true);
+
+  const [showScrollTop, setShowScrollTop] =
+    useState(false);
 
   const [settings, setSettings] = useState({
     shopName: "हरि ॐ Furniture House",
+
     address:
       "Your Furniture Shop Address, Your City, India",
+
     phone: "+91 XXXXX XXXXX",
+
     whatsapp: "919596492640",
+
     email: "info@hariomfurniture.com",
+
     mapsUrl: "",
-    openingHours: "Mon - Sun: 10:00 AM - 8:00 PM",
+
+    openingHours:
+      "Mon - Sun: 10:00 AM - 8:00 PM",
   });
 
   // ======================================================
@@ -50,6 +67,43 @@ function Home() {
   useEffect(() => {
     trackVisitor();
   }, []);
+
+  // ======================================================
+  // SCROLL TO TOP VISIBILITY
+  // ======================================================
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(
+        window.scrollY > 500
+      );
+    };
+
+    window.addEventListener(
+      "scroll",
+      handleScroll
+    );
+
+    handleScroll();
+
+    return () => {
+      window.removeEventListener(
+        "scroll",
+        handleScroll
+      );
+    };
+  }, []);
+
+  // ======================================================
+  // SCROLL TO TOP
+  // ======================================================
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
 
   // ======================================================
   // LOAD WEBSITE SETTINGS
@@ -62,23 +116,26 @@ function Home() {
       "website"
     );
 
-    const unsubscribe = onSnapshot(
-      settingsRef,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          setSettings((previous) => ({
-            ...previous,
-            ...snapshot.data(),
-          }));
+    const unsubscribe =
+      onSnapshot(
+        settingsRef,
+        (snapshot) => {
+          if (snapshot.exists()) {
+            setSettings(
+              (previous) => ({
+                ...previous,
+                ...snapshot.data(),
+              })
+            );
+          }
+        },
+        (error) => {
+          console.error(
+            "Website settings error:",
+            error
+          );
         }
-      },
-      (error) => {
-        console.error(
-          "Website settings error:",
-          error
-        );
-      }
-    );
+      );
 
     return () => unsubscribe();
   }, []);
@@ -88,40 +145,51 @@ function Home() {
   // ======================================================
 
   useEffect(() => {
-    const loadFeaturedProducts = async () => {
-      try {
-        setLoadingProducts(true);
+    const loadFeaturedProducts =
+      async () => {
+        try {
+          setLoadingProducts(true);
 
-        const snapshot = await getDocs(
-          collection(db, "products")
-        );
+          const snapshot =
+            await getDocs(
+              collection(
+                db,
+                "products"
+              )
+            );
 
-        const productList = snapshot.docs.map(
-          (item) => ({
-            id: item.id,
-            ...item.data(),
-          })
-        );
+          const productList =
+            snapshot.docs.map(
+              (item) => ({
+                id: item.id,
+                ...item.data(),
+              })
+            );
 
-        const availableFeatured =
-          productList.filter(
-            (product) =>
-              product.featured === true &&
-              product.available !== false
+          const availableFeatured =
+            productList.filter(
+              (product) =>
+                product.featured ===
+                  true &&
+                product.available !==
+                  false
+            );
+
+          setFeaturedProducts(
+            availableFeatured.slice(
+              0,
+              4
+            )
           );
-
-        setFeaturedProducts(
-          availableFeatured.slice(0, 4)
-        );
-      } catch (error) {
-        console.error(
-          "Unable to load featured products:",
-          error
-        );
-      } finally {
-        setLoadingProducts(false);
-      }
-    };
+        } catch (error) {
+          console.error(
+            "Unable to load featured products:",
+            error
+          );
+        } finally {
+          setLoadingProducts(false);
+        }
+      };
 
     loadFeaturedProducts();
   }, []);
@@ -167,9 +235,10 @@ function Home() {
       ""
     );
 
-  const whatsappUrl = whatsappNumber
-    ? `https://wa.me/${whatsappNumber}`
-    : "#";
+  const whatsappUrl =
+    whatsappNumber
+      ? `https://wa.me/${whatsappNumber}`
+      : "#";
 
   const phoneNumber =
     settings.phone?.replace(
@@ -207,16 +276,19 @@ function Home() {
             </p>
 
             <h1 className="text-5xl font-bold leading-tight md:text-7xl">
+
               Furniture that makes
+
               <span className="block text-[#E0B66B]">
                 your house a home.
               </span>
+
             </h1>
 
             <p className="mt-6 max-w-xl text-lg leading-8 text-white/80">
-              Discover beautifully crafted furniture
-              designed for comfort, durability and
-              timeless style.
+              Discover beautifully crafted
+              furniture designed for comfort,
+              durability and timeless style.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
@@ -226,6 +298,7 @@ function Home() {
                 className="flex items-center gap-2 bg-[#8B2E2E] px-7 py-4 font-semibold transition hover:bg-[#6B1E1E]"
               >
                 Explore Collection
+
                 <ArrowRight size={18} />
               </Link>
 
@@ -243,6 +316,12 @@ function Home() {
         </div>
 
       </section>
+
+      {/* ==================================================
+          GLOWING OFFER BANNER
+      ================================================== */}
+
+      <OfferBanner />
 
       {/* ==================================================
           CATEGORIES
@@ -269,20 +348,52 @@ function Home() {
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
 
-            {categories.map((category) => {
+            {categories.map(
+              (category) => {
 
-              const Icon = category.icon;
+                const Icon =
+                  category.icon;
 
-              if (
-                category.name ===
-                "Custom Furniture"
-              ) {
+                if (
+                  category.name ===
+                  "Custom Furniture"
+                ) {
+                  return (
+                    <Link
+                      key={
+                        category.name
+                      }
+                      to="/custom-furniture"
+                      className="group border border-black/10 bg-white p-7 text-center transition hover:-translate-y-1 hover:shadow-xl"
+                    >
+
+                      <Icon
+                        className="mx-auto mb-5 text-[#8B2E2E] transition group-hover:scale-110"
+                        size={36}
+                        strokeWidth={1.5}
+                      />
+
+                      <h3 className="font-semibold">
+                        {
+                          category.name
+                        }
+                      </h3>
+
+                    </Link>
+                  );
+                }
+
                 return (
                   <Link
-                    key={category.name}
-                    to="/custom-furniture"
+                    key={
+                      category.name
+                    }
+                    to={`/shop?category=${encodeURIComponent(
+                      category.name
+                    )}`}
                     className="group border border-black/10 bg-white p-7 text-center transition hover:-translate-y-1 hover:shadow-xl"
                   >
+
                     <Icon
                       className="mx-auto mb-5 text-[#8B2E2E] transition group-hover:scale-110"
                       size={36}
@@ -290,33 +401,15 @@ function Home() {
                     />
 
                     <h3 className="font-semibold">
-                      {category.name}
+                      {
+                        category.name
+                      }
                     </h3>
+
                   </Link>
                 );
               }
-
-              return (
-                <Link
-                  key={category.name}
-                  to={`/shop?category=${encodeURIComponent(
-                    category.name
-                  )}`}
-                  className="group border border-black/10 bg-white p-7 text-center transition hover:-translate-y-1 hover:shadow-xl"
-                >
-                  <Icon
-                    className="mx-auto mb-5 text-[#8B2E2E] transition group-hover:scale-110"
-                    size={36}
-                    strokeWidth={1.5}
-                  />
-
-                  <h3 className="font-semibold">
-                    {category.name}
-                  </h3>
-                </Link>
-              );
-
-            })}
+            )}
 
           </div>
 
@@ -354,6 +447,7 @@ function Home() {
               className="flex items-center gap-2 font-semibold text-[#8B2E2E]"
             >
               View All
+
               <ArrowRight size={18} />
             </Link>
 
@@ -377,16 +471,19 @@ function Home() {
           )}
 
           {!loadingProducts &&
-            featuredProducts.length === 0 && (
+            featuredProducts.length ===
+              0 && (
               <div className="mt-12 bg-white p-12 text-center">
 
                 <h3 className="text-xl font-bold">
-                  Featured furniture coming soon
+                  Featured furniture
+                  coming soon
                 </h3>
 
                 <p className="mt-3 text-gray-500">
-                  Products marked as Featured in
-                  the Admin Panel will appear here.
+                  Products marked as
+                  Featured in the Admin
+                  Panel will appear here.
                 </p>
 
                 <Link
@@ -394,21 +491,29 @@ function Home() {
                   className="mt-6 inline-flex items-center gap-2 bg-[#8B2E2E] px-6 py-3 font-semibold text-white"
                 >
                   Browse All Furniture
-                  <ArrowRight size={18} />
+
+                  <ArrowRight
+                    size={18}
+                  />
                 </Link>
 
               </div>
             )}
 
           {!loadingProducts &&
-            featuredProducts.length > 0 && (
+            featuredProducts.length >
+              0 && (
               <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
 
                 {featuredProducts.map(
                   (product) => (
                     <ProductCard
-                      key={product.id}
-                      product={product}
+                      key={
+                        product.id
+                      }
+                      product={
+                        product
+                      }
                     />
                   )
                 )}
@@ -442,10 +547,12 @@ function Home() {
             </h2>
 
             <p className="mt-6 leading-7 text-white/70">
-              Tell us what you need. Share your
-              design, dimensions and preferred finish,
-              and our team will help turn your idea
-              into beautiful furniture.
+              Tell us what you need.
+              Share your design,
+              dimensions and preferred
+              finish, and our team will
+              help turn your idea into
+              beautiful furniture.
             </p>
 
             <Link
@@ -453,7 +560,10 @@ function Home() {
               className="mt-8 inline-flex items-center gap-2 bg-[#8B2E2E] px-7 py-4 font-semibold transition hover:bg-[#6B1E1E]"
             >
               Request Custom Quote
-              <ArrowRight size={18} />
+
+              <ArrowRight
+                size={18}
+              />
             </Link>
 
           </div>
@@ -484,7 +594,8 @@ function Home() {
           </p>
 
           <h2 className="text-4xl font-bold md:text-5xl">
-            Built with quality. Made to last.
+            Built with quality. Made
+            to last.
           </h2>
 
           <div className="mt-14 grid gap-8 md:grid-cols-4">
@@ -561,13 +672,15 @@ function Home() {
             </p>
 
             <h2 className="text-4xl font-bold md:text-5xl">
-              Contact {settings.shopName}
+              Contact{" "}
+              {settings.shopName}
             </h2>
 
             <p className="mx-auto mt-5 max-w-2xl leading-7 text-gray-600">
-              Visit our showroom or contact us for
-              furniture enquiries, custom designs and
-              product information.
+              Visit our showroom or
+              contact us for furniture
+              enquiries, custom designs
+              and product information.
             </p>
 
           </div>
@@ -592,13 +705,18 @@ function Home() {
 
               {settings.mapsUrl && (
                 <a
-                  href={settings.mapsUrl}
+                  href={
+                    settings.mapsUrl
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#8B2E2E] hover:underline"
                 >
                   Open in Google Maps
-                  <ArrowRight size={15} />
+
+                  <ArrowRight
+                    size={15}
+                  />
                 </a>
               )}
 
@@ -628,7 +746,8 @@ function Home() {
               </a>
 
               <p className="mt-2 text-sm text-gray-400">
-                Call us for product enquiries.
+                Call us for product
+                enquiries.
               </p>
 
             </div>
@@ -638,7 +757,9 @@ function Home() {
             <div className="bg-white p-7 shadow-sm">
 
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F5E4E4] text-[#8B2E2E]">
-                <MessageCircle size={22} />
+                <MessageCircle
+                  size={22}
+                />
               </div>
 
               <h3 className="mt-5 text-lg font-bold">
@@ -655,8 +776,9 @@ function Home() {
               </a>
 
               <p className="mt-2 text-sm text-gray-400">
-                Send us your furniture enquiry
-                directly on WhatsApp.
+                Send us your furniture
+                enquiry directly on
+                WhatsApp.
               </p>
 
             </div>
@@ -688,7 +810,9 @@ function Home() {
                 />
 
                 <span>
-                  {settings.openingHours}
+                  {
+                    settings.openingHours
+                  }
                 </span>
 
               </div>
@@ -700,6 +824,22 @@ function Home() {
         </div>
 
       </section>
+
+      {/* ==================================================
+          SCROLL TO TOP
+      ================================================== */}
+
+      {showScrollTop && (
+        <button
+          type="button"
+          onClick={scrollToTop}
+          aria-label="Scroll to top"
+          title="Back to top"
+          className="fixed bottom-6 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[#6B1E1E] text-white shadow-xl transition duration-300 hover:-translate-y-1 hover:bg-[#8B2E2E] hover:shadow-[0_8px_25px_rgba(107,30,30,0.4)]"
+        >
+          <ArrowUp size={21} />
+        </button>
+      )}
 
     </div>
   );
