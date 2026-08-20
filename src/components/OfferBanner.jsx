@@ -16,8 +16,7 @@ import {
 import { db } from "../firebase/firebase";
 
 function OfferBanner() {
-  const [offers, setOffers] =
-    useState([]);
+  const [offers, setOffers] = useState([]);
 
   const [currentIndex, setCurrentIndex] =
     useState(0);
@@ -64,7 +63,6 @@ function OfferBanner() {
             });
 
         setOffers(activeOffers);
-
         setCurrentIndex(0);
       } catch (error) {
         console.error(
@@ -90,17 +88,14 @@ function OfferBanner() {
       return;
     }
 
-    const interval =
-      setInterval(() => {
-        setCurrentIndex(
-          (previous) =>
-            (previous + 1) %
-            offers.length
-        );
-      }, 5000);
+    const interval = setInterval(() => {
+      setCurrentIndex(
+        (previous) =>
+          (previous + 1) % offers.length
+      );
+    }, 5000);
 
-    return () =>
-      clearInterval(interval);
+    return () => clearInterval(interval);
   }, [offers.length]);
 
   // ======================================================
@@ -119,8 +114,7 @@ function OfferBanner() {
   const nextOffer = () => {
     setCurrentIndex(
       (previous) =>
-        (previous + 1) %
-        offers.length
+        (previous + 1) % offers.length
     );
   };
 
@@ -159,7 +153,7 @@ function OfferBanner() {
   // ======================================================
 
   return (
-    <section className="relative z-20 overflow-hidden bg-[#3A0D0D]">
+    <section className="relative z-20 w-full overflow-hidden bg-[#3A0D0D]">
 
       {/* ==================================================
           BACKGROUND GLOW
@@ -179,7 +173,7 @@ function OfferBanner() {
           BANNER
       ================================================== */}
 
-      <div className="relative mx-auto max-w-7xl px-4 py-3 sm:px-6">
+      <div className="relative mx-auto w-full max-w-7xl px-4 py-2 sm:px-6">
 
         <div className="relative overflow-hidden rounded-xl border border-[#D6A756]/60 shadow-[0_0_25px_rgba(184,134,59,0.25)]">
 
@@ -187,7 +181,11 @@ function OfferBanner() {
 
           <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-[#E0B66B]/30 animate-pulse" />
 
-          <div className="relative flex min-h-[105px] items-center justify-center px-10 py-4 sm:px-14">
+          {/* ==================================================
+              MAIN BANNER CONTENT
+          ================================================== */}
+
+          <div className="relative flex min-h-[82px] items-center justify-center px-10 py-3 sm:px-14">
 
             {/* ==================================================
                 LEFT ARROW
@@ -200,9 +198,7 @@ function OfferBanner() {
                 aria-label="Previous offer"
                 className="absolute left-2 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20 sm:left-4"
               >
-                <ArrowLeft
-                  size={16}
-                />
+                <ArrowLeft size={16} />
               </button>
             )}
 
@@ -212,7 +208,7 @@ function OfferBanner() {
 
             <div
               key={offer.id}
-              className="flex w-full flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left"
+              className="flex w-full flex-col items-center justify-between gap-3 text-center sm:flex-row sm:text-left"
             >
 
               {/* TITLE */}
@@ -261,7 +257,9 @@ function OfferBanner() {
 
               </div>
 
-              {/* DISCOUNT + BUTTON */}
+              {/* ==================================================
+                  DISCOUNT + BUTTON
+              ================================================== */}
 
               <div className="flex items-center gap-3 sm:gap-5">
 
@@ -287,14 +285,12 @@ function OfferBanner() {
                   to="/shop"
                   className="group flex items-center gap-1.5 rounded-full bg-[#E0B66B] px-4 py-2 text-xs font-bold text-[#3A0D0D] shadow-[0_0_15px_rgba(224,182,107,0.25)] transition duration-300 hover:scale-105 hover:bg-white hover:shadow-[0_0_25px_rgba(255,255,255,0.3)] sm:px-5 sm:py-2.5 sm:text-sm"
                 >
-
                   Shop Now
 
                   <ArrowRight
                     size={14}
                     className="transition-transform group-hover:translate-x-1"
                   />
-
                 </Link>
 
               </div>
@@ -312,9 +308,7 @@ function OfferBanner() {
                 aria-label="Next offer"
                 className="absolute right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20 sm:right-4"
               >
-                <ArrowRight
-                  size={16}
-                />
+                <ArrowRight size={16} />
               </button>
             )}
 
@@ -327,7 +321,7 @@ function OfferBanner() {
         ================================================== */}
 
         {offers.length > 1 && (
-          <div className="flex items-center justify-center gap-1.5 pt-2">
+          <div className="flex items-center justify-center gap-1.5 pt-1">
 
             {offers.map(
               (item, index) => (
@@ -335,16 +329,13 @@ function OfferBanner() {
                   key={item.id}
                   type="button"
                   onClick={() =>
-                    setCurrentIndex(
-                      index
-                    )
+                    setCurrentIndex(index)
                   }
                   aria-label={`Show offer ${
                     index + 1
                   }`}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
-                    index ===
-                    currentIndex
+                    index === currentIndex
                       ? "w-5 bg-[#E0B66B]"
                       : "w-1.5 bg-white/30 hover:bg-white/60"
                   }`}

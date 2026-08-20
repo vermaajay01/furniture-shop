@@ -9,29 +9,29 @@ function MainLayout() {
     <div className="flex min-h-screen flex-col">
 
       {/* ==================================================
-          NAVBAR
+          FIXED NAVBAR
       ================================================== */}
 
       <Navbar />
 
       {/* ==================================================
-          OFFER BANNER / OFFER CAROUSEL
-          Appears directly below navbar
+          CONTENT AREA
+          Navbar height = 82px
       ================================================== */}
 
-      <OfferBanner />
+      <div className="pt-[82px]">
 
-      {/* ==================================================
-          PAGE CONTENT
-      ================================================== */}
+        {/* OFFER BANNER */}
 
-      <main className="flex-1 pt-[82px]">
-        <Outlet />
-      </main>
+        <OfferBanner />
 
-      {/* ==================================================
-          FOOTER
-      ================================================== */}
+        {/* PAGE CONTENT */}
+
+        <main className="flex-1">
+          <Outlet />
+        </main>
+
+      </div>
 
       <Footer />
 
