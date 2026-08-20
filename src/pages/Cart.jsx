@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+
 import {
   ArrowLeft,
   Minus,
@@ -10,6 +11,7 @@ import {
   User,
   Phone,
   MapPin,
+  Tag,
 } from "lucide-react";
 
 import {
@@ -44,7 +46,8 @@ function Cart() {
     address: "",
   });
 
-  const [sending, setSending] = useState(false);
+  const [sending, setSending] =
+    useState(false);
 
   // ======================================================
   // LOAD WEBSITE SETTINGS
@@ -59,9 +62,8 @@ function Cart() {
           "website"
         );
 
-        const snapshot = await getDoc(
-          settingsRef
-        );
+        const snapshot =
+          await getDoc(settingsRef);
 
         if (snapshot.exists()) {
           setSettings((previous) => ({
@@ -85,7 +87,10 @@ function Cart() {
   // ======================================================
 
   const handleCustomerChange = (e) => {
-    const { name, value } = e.target;
+    const {
+      name,
+      value,
+    } = e.target;
 
     setCustomer((previous) => ({
       ...previous,
@@ -110,12 +115,16 @@ function Cart() {
     }
 
     if (!customer.phone.trim()) {
-      alert("Please enter your phone number.");
+      alert(
+        "Please enter your phone number."
+      );
       return;
     }
 
     if (!customer.address.trim()) {
-      alert("Please enter your delivery address.");
+      alert(
+        "Please enter your delivery address."
+      );
       return;
     }
 
@@ -137,18 +146,56 @@ function Cart() {
       // PREPARE ORDER ITEMS
       // ==================================================
 
-      const orderItems = cartItems.map((item) => ({
-        productId: item.id,
-        name: item.name,
-        category: item.category || "Furniture",
-        material: item.material || "",
-        image: item.image || "",
-        price: Number(item.price || 0),
-        quantity: Number(item.quantity || 1),
-        itemTotal:
-          Number(item.price || 0) *
-          Number(item.quantity || 1),
-      }));
+      const orderItems =
+        cartItems.map((item) => {
+          const price = Number(
+            item.price || 0
+          );
+
+          const originalPrice =
+            Number(
+              item.originalPrice ||
+                item.price ||
+                0
+            );
+
+          const discountPercent =
+            Number(
+              item.discountPercent || 0
+            );
+
+          const quantity = Number(
+            item.quantity || 1
+          );
+
+          const itemTotal =
+            price * quantity;
+
+          return {
+            productId: item.id,
+            name: item.name,
+            category:
+              item.category ||
+              "Furniture",
+            material:
+              item.material || "",
+            image:
+              item.image || "",
+
+            // Current selling price
+            price,
+
+            // Original price before offer
+            originalPrice,
+
+            // Discount information
+            discountPercent,
+
+            quantity,
+
+            itemTotal,
+          };
+        });
 
       // ==================================================
       // SAVE ORDER TO FIRESTORE
@@ -156,26 +203,35 @@ function Cart() {
 
       const orderData = {
         customer: {
-          name: customer.name.trim(),
-          phone: customer.phone.trim(),
-          address: customer.address.trim(),
+          name:
+            customer.name.trim(),
+
+          phone:
+            customer.phone.trim(),
+
+          address:
+            customer.address.trim(),
         },
 
         items: orderItems,
 
-        total: Number(cartTotal),
+        total: Number(
+          cartTotal
+        ),
 
         status: "new",
 
-        createdAt: serverTimestamp(),
+        createdAt:
+          serverTimestamp(),
 
         source: "website",
       };
 
-      const orderRef = await addDoc(
-        collection(db, "orders"),
-        orderData
-      );
+      const orderRef =
+        await addDoc(
+          collection(db, "orders"),
+          orderData
+        );
 
       // ==================================================
       // WHATSAPP MESSAGE
@@ -197,20 +253,48 @@ Address: ${customer.address}
 ORDER ITEMS
 -----------`;
 
-      orderItems.forEach((item, index) => {
-        message += `
+      orderItems.forEach(
+        (item, index) => {
+          message += `
 
 ${index + 1}. ${item.name}
 Category: ${item.category}
 Material: ${
-          item.material || "Not specified"
-        }
-Price: ₹${item.price.toLocaleString("en-IN")}
+            item.material ||
+            "Not specified"
+          }`;
+
+          // ==================================================
+          // PRICE INFORMATION
+          // ==================================================
+
+          if (
+            item.discountPercent > 0 &&
+            item.originalPrice >
+              item.price
+          ) {
+            message += `
+Original Price: ₹${item.originalPrice.toLocaleString(
+              "en-IN"
+            )}
+Discount: ${item.discountPercent}% OFF
+Offer Price: ₹${item.price.toLocaleString(
+              "en-IN"
+            )}`;
+          } else {
+            message += `
+Price: ₹${item.price.toLocaleString(
+              "en-IN"
+            )}`;
+          }
+
+          message += `
 Quantity: ${item.quantity}
 Item Total: ₹${item.itemTotal.toLocaleString(
-          "en-IN"
-        )}`;
-      });
+            "en-IN"
+          )}`;
+        }
+      );
 
       message += `
 
@@ -228,7 +312,9 @@ Thank you.`;
 
       const whatsappURL =
         `https://wa.me/${whatsappNumber}?text=` +
-        encodeURIComponent(message);
+        encodeURIComponent(
+          message
+        );
 
       window.open(
         whatsappURL,
@@ -268,7 +354,9 @@ Thank you.`;
   if (!cartItems.length) {
     return (
       <div className="min-h-screen bg-[#F8F1E7] px-6 py-16">
+
         <div className="mx-auto max-w-3xl">
+
           <div className="bg-white px-6 py-16 text-center shadow-sm">
 
             <ShoppingCart
@@ -281,9 +369,9 @@ Thank you.`;
             </h1>
 
             <p className="mt-3 text-gray-500">
-              Add some furniture to your cart
-              and send your enquiry directly
-              to our WhatsApp.
+              Add some furniture to your
+              cart and send your enquiry
+              directly to our WhatsApp.
             </p>
 
             <Link
@@ -295,7 +383,9 @@ Thank you.`;
             </Link>
 
           </div>
+
         </div>
+
       </div>
     );
   }
@@ -308,6 +398,10 @@ Thank you.`;
     <div className="min-h-screen bg-[#F8F1E7] px-6 py-12">
 
       <div className="mx-auto max-w-7xl">
+
+        {/* ==================================================
+            HEADER
+        ================================================== */}
 
         <div className="mb-8">
 
@@ -332,14 +426,41 @@ Thank you.`;
 
         <div className="grid gap-8 lg:grid-cols-[1fr_400px]">
 
-          {/* CART ITEMS */}
+          {/* ==================================================
+              CART ITEMS
+          ================================================== */}
 
           <div className="space-y-4">
 
             {cartItems.map((item) => {
+              const currentPrice =
+                Number(
+                  item.price || 0
+                );
+
+              const originalPrice =
+                Number(
+                  item.originalPrice ||
+                    item.price ||
+                    0
+                );
+
+              const discountPercent =
+                Number(
+                  item.discountPercent ||
+                    0
+                );
+
+              const hasDiscount =
+                discountPercent > 0 &&
+                originalPrice >
+                  currentPrice;
+
               const itemTotal =
-                Number(item.price || 0) *
-                item.quantity;
+                currentPrice *
+                Number(
+                  item.quantity || 1
+                );
 
               return (
                 <div
@@ -347,16 +468,36 @@ Thank you.`;
                   className="flex flex-col gap-5 bg-white p-5 shadow-sm sm:flex-row"
                 >
 
+                  {/* ==================================================
+                      IMAGE
+                  ================================================== */}
+
                   <Link
                     to={`/product/${item.id}`}
                     className="h-32 w-full shrink-0 overflow-hidden bg-gray-100 sm:w-32"
                   >
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="h-full w-full object-cover"
-                    />
+
+                    <div className="relative h-full w-full">
+
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="h-full w-full object-cover"
+                      />
+
+                      {hasDiscount && (
+                        <span className="absolute left-2 top-2 rounded-full bg-[#8B2E2E] px-2 py-1 text-[10px] font-bold text-white">
+                          {discountPercent}% OFF
+                        </span>
+                      )}
+
+                    </div>
+
                   </Link>
+
+                  {/* ==================================================
+                      INFORMATION
+                  ================================================== */}
 
                   <div className="flex flex-1 flex-col justify-between">
 
@@ -376,14 +517,50 @@ Thank you.`;
                         </p>
                       )}
 
-                      <p className="mt-3 font-semibold text-[#8B2E2E]">
-                        ₹
-                        {Number(
-                          item.price || 0
-                        ).toLocaleString("en-IN")}
-                      </p>
+                      {/* ==================================================
+                          PRICE
+                      ================================================== */}
+
+                      {hasDiscount ? (
+                        <div className="mt-3">
+
+                          <div className="flex flex-wrap items-center gap-2">
+
+                            <span className="text-sm text-gray-400 line-through">
+                              ₹
+                              {originalPrice.toLocaleString(
+                                "en-IN"
+                              )}
+                            </span>
+
+                            <span className="rounded-full bg-[#F5E4E4] px-2 py-1 text-[11px] font-bold text-[#8B2E2E]">
+                              {discountPercent}% OFF
+                            </span>
+
+                          </div>
+
+                          <p className="mt-1 font-semibold text-[#8B2E2E]">
+                            ₹
+                            {currentPrice.toLocaleString(
+                              "en-IN"
+                            )}
+                          </p>
+
+                        </div>
+                      ) : (
+                        <p className="mt-3 font-semibold text-[#8B2E2E]">
+                          ₹
+                          {currentPrice.toLocaleString(
+                            "en-IN"
+                          )}
+                        </p>
+                      )}
 
                     </div>
+
+                    {/* ==================================================
+                        QUANTITY + TOTAL
+                    ================================================== */}
 
                     <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
 
@@ -392,7 +569,9 @@ Thank you.`;
                         <button
                           type="button"
                           onClick={() =>
-                            decreaseQuantity(item.id)
+                            decreaseQuantity(
+                              item.id
+                            )
                           }
                           className="flex h-9 w-9 items-center justify-center hover:bg-[#F8F1E7]"
                         >
@@ -406,7 +585,9 @@ Thank you.`;
                         <button
                           type="button"
                           onClick={() =>
-                            increaseQuantity(item.id)
+                            increaseQuantity(
+                              item.id
+                            )
                           }
                           className="flex h-9 w-9 items-center justify-center hover:bg-[#F8F1E7]"
                         >
@@ -427,7 +608,9 @@ Thank you.`;
                         <button
                           type="button"
                           onClick={() =>
-                            removeFromCart(item.id)
+                            removeFromCart(
+                              item.id
+                            )
                           }
                           className="text-gray-400 hover:text-red-600"
                         >
@@ -446,7 +629,9 @@ Thank you.`;
 
           </div>
 
-          {/* ORDER FORM */}
+          {/* ==================================================
+              ORDER FORM
+          ================================================== */}
 
           <div className="h-fit bg-white p-6 shadow-sm lg:sticky lg:top-28">
 
@@ -455,16 +640,22 @@ Thank you.`;
             </h2>
 
             <form
-              onSubmit={sendOrderToWhatsApp}
+              onSubmit={
+                sendOrderToWhatsApp
+              }
               className="mt-6 space-y-4"
             >
 
+              {/* NAME */}
+
               <div>
+
                 <label className="mb-2 block text-sm font-semibold">
                   Your Name *
                 </label>
 
                 <div className="relative">
+
                   <User
                     size={18}
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -474,19 +665,27 @@ Thank you.`;
                     type="text"
                     name="name"
                     value={customer.name}
-                    onChange={handleCustomerChange}
+                    onChange={
+                      handleCustomerChange
+                    }
                     placeholder="Enter your name"
                     className="w-full border border-gray-200 py-3 pl-10 pr-3 text-sm outline-none focus:border-[#8B2E2E]"
                   />
+
                 </div>
+
               </div>
 
+              {/* PHONE */}
+
               <div>
+
                 <label className="mb-2 block text-sm font-semibold">
                   Phone Number *
                 </label>
 
                 <div className="relative">
+
                   <Phone
                     size={18}
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -496,19 +695,27 @@ Thank you.`;
                     type="tel"
                     name="phone"
                     value={customer.phone}
-                    onChange={handleCustomerChange}
+                    onChange={
+                      handleCustomerChange
+                    }
                     placeholder="Enter phone number"
                     className="w-full border border-gray-200 py-3 pl-10 pr-3 text-sm outline-none focus:border-[#8B2E2E]"
                   />
+
                 </div>
+
               </div>
 
+              {/* ADDRESS */}
+
               <div>
+
                 <label className="mb-2 block text-sm font-semibold">
                   Address *
                 </label>
 
                 <div className="relative">
+
                   <MapPin
                     size={18}
                     className="absolute left-3 top-3 text-gray-400"
@@ -516,14 +723,24 @@ Thank you.`;
 
                   <textarea
                     name="address"
-                    value={customer.address}
-                    onChange={handleCustomerChange}
+                    value={
+                      customer.address
+                    }
+                    onChange={
+                      handleCustomerChange
+                    }
                     rows="4"
                     placeholder="Enter delivery address"
                     className="w-full resize-none border border-gray-200 py-3 pl-10 pr-3 text-sm outline-none focus:border-[#8B2E2E]"
                   />
+
                 </div>
+
               </div>
+
+              {/* ==================================================
+                  TOTAL
+              ================================================== */}
 
               <div className="border-t border-gray-100 pt-5">
 
@@ -535,31 +752,44 @@ Thank you.`;
 
                   <span className="text-2xl font-bold text-[#6B1E1E]">
                     ₹
-                    {cartTotal.toLocaleString("en-IN")}
+                    {cartTotal.toLocaleString(
+                      "en-IN"
+                    )}
                   </span>
 
                 </div>
 
               </div>
 
+              {/* ==================================================
+                  WHATSAPP
+              ================================================== */}
+
               <button
                 type="submit"
                 disabled={sending}
                 className="flex w-full items-center justify-center gap-2 bg-[#6B1E1E] px-6 py-4 font-semibold text-white transition hover:bg-[#8B2E2E] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <MessageCircle size={21} />
+
+                <MessageCircle
+                  size={21}
+                />
 
                 {sending
                   ? "Saving Order..."
                   : "Send Order on WhatsApp"}
+
               </button>
 
               <p className="text-center text-xs leading-5 text-gray-400">
-                Your order will be saved securely
-                and sent to our WhatsApp.
+                Your order will be saved
+                securely and sent to our
+                WhatsApp.
               </p>
 
             </form>
+
+            {/* CLEAR CART */}
 
             <button
               type="button"

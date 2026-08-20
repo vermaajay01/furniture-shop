@@ -18,9 +18,13 @@ import {
   X,
   ShoppingCart,
   Settings,
+  Tag,
 } from "lucide-react";
 
-import { collection, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+} from "firebase/firestore";
 
 import { db } from "../firebase/firebase";
 import { adminLogout } from "../firebase/auth";
@@ -160,7 +164,6 @@ function AdminLayout() {
         }`}
       >
         <span className="flex items-center gap-3">
-
           <Icon
             size={19}
             className={
@@ -171,7 +174,6 @@ function AdminLayout() {
           />
 
           {children}
-
         </span>
 
         {badge > 0 && (
@@ -187,10 +189,13 @@ function AdminLayout() {
               : badge}
           </span>
         )}
-
       </Link>
     );
   };
+
+  // ======================================================
+  // PAGE
+  // ======================================================
 
   return (
     <div className="min-h-screen bg-[#F8F1E7]">
@@ -278,12 +283,16 @@ function AdminLayout() {
 
           <div className="space-y-1">
 
+            {/* DASHBOARD */}
+
             <SidebarLink
               to="/admin/dashboard"
               icon={LayoutDashboard}
             >
               Dashboard
             </SidebarLink>
+
+            {/* PRODUCTS */}
 
             <SidebarLink
               to="/admin/products"
@@ -292,12 +301,16 @@ function AdminLayout() {
               Products
             </SidebarLink>
 
+            {/* ADD PRODUCT */}
+
             <SidebarLink
               to="/admin/products/add"
               icon={Plus}
             >
               Add Product
             </SidebarLink>
+
+            {/* ORDERS */}
 
             <SidebarLink
               to="/admin/orders"
@@ -307,6 +320,8 @@ function AdminLayout() {
               Orders
             </SidebarLink>
 
+            {/* CUSTOM REQUESTS */}
+
             <SidebarLink
               to="/admin/requests"
               icon={MessageSquare}
@@ -315,11 +330,24 @@ function AdminLayout() {
               Custom Requests
             </SidebarLink>
 
+            {/* NOTIFICATIONS */}
+
             <SidebarLink
               to="/admin/notifications"
               icon={Bell}
             >
               Notifications
+            </SidebarLink>
+
+            {/* ==================================================
+                OFFERS - NEW
+            ================================================== */}
+
+            <SidebarLink
+              to="/admin/offers"
+              icon={Tag}
+            >
+              Offers
             </SidebarLink>
 
           </div>
@@ -332,12 +360,16 @@ function AdminLayout() {
 
           <div className="space-y-1">
 
+            {/* VIEW WEBSITE */}
+
             <SidebarLink
               to="/"
               icon={Globe}
             >
               View Website
             </SidebarLink>
+
+            {/* WEBSITE SETTINGS */}
 
             <SidebarLink
               to="/admin/settings"

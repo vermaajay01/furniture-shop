@@ -5,6 +5,12 @@ import {
 } from "react-router-dom";
 
 // ======================================================
+// GLOBAL
+// ======================================================
+
+import ScrollToTop from "./components/ScrollToTop";
+
+// ======================================================
 // CUSTOMER PAGES
 // ======================================================
 
@@ -40,9 +46,21 @@ import AdminOrders from "./pages/admin/AdminOrders";
 import Notifications from "./pages/admin/Notifications";
 import WebsiteSettings from "./pages/admin/WebsiteSettings";
 
+// ======================================================
+// OFFERS
+// ======================================================
+
+import Offers from "./pages/admin/Offers";
+
 function App() {
   return (
     <BrowserRouter>
+
+      {/* ==================================================
+          SCROLL TO TOP ON EVERY ROUTE CHANGE
+      ================================================== */}
+
+      <ScrollToTop />
 
       <Routes>
 
@@ -53,25 +71,35 @@ function App() {
 
         <Route element={<MainLayout />}>
 
+          {/* HOME */}
+
           <Route
             path="/"
             element={<Home />}
           />
+
+          {/* SHOP */}
 
           <Route
             path="/shop"
             element={<Shop />}
           />
 
+          {/* PRODUCT DETAILS */}
+
           <Route
             path="/product/:id"
             element={<ProductDetails />}
           />
 
+          {/* CUSTOM FURNITURE */}
+
           <Route
             path="/custom-furniture"
             element={<CustomFurniture />}
           />
+
+          {/* CART */}
 
           <Route
             path="/cart"
@@ -82,7 +110,7 @@ function App() {
 
         {/* ==================================================
             ADMIN LOGIN
-            NO ADMIN SIDEBAR
+            NO SIDEBAR
         ================================================== */}
 
         <Route
@@ -92,61 +120,86 @@ function App() {
 
         {/* ==================================================
             ADMIN AREA
-            AdminLayout provides the fixed sidebar
+            AdminLayout provides static sidebar
         ================================================== */}
 
         <Route element={<AdminLayout />}>
 
-          {/* DASHBOARD */}
+          {/* ==================================================
+              DASHBOARD
+          ================================================== */}
 
           <Route
             path="/admin/dashboard"
             element={<AdminDashboard />}
           />
 
-          {/* PRODUCTS */}
+          {/* ==================================================
+              PRODUCTS
+          ================================================== */}
 
           <Route
             path="/admin/products"
             element={<AdminProducts />}
           />
 
-          {/* ADD PRODUCT */}
+          {/* ==================================================
+              ADD PRODUCT
+          ================================================== */}
 
           <Route
             path="/admin/products/add"
             element={<AddProduct />}
           />
 
-          {/* EDIT PRODUCT */}
+          {/* ==================================================
+              EDIT PRODUCT
+          ================================================== */}
 
           <Route
             path="/admin/products/edit/:id"
             element={<EditProduct />}
           />
 
-          {/* ORDERS */}
+          {/* ==================================================
+              ORDERS
+          ================================================== */}
 
           <Route
             path="/admin/orders"
             element={<AdminOrders />}
           />
 
-          {/* CUSTOM REQUESTS */}
+          {/* ==================================================
+              CUSTOM REQUESTS
+          ================================================== */}
 
           <Route
             path="/admin/requests"
             element={<AdminRequests />}
           />
 
-          {/* NOTIFICATIONS */}
+          {/* ==================================================
+              NOTIFICATIONS
+          ================================================== */}
 
           <Route
             path="/admin/notifications"
             element={<Notifications />}
           />
 
-          {/* WEBSITE SETTINGS */}
+          {/* ==================================================
+              OFFERS - NEW
+          ================================================== */}
+
+          <Route
+            path="/admin/offers"
+            element={<Offers />}
+          />
+
+          {/* ==================================================
+              WEBSITE SETTINGS
+          ================================================== */}
 
           <Route
             path="/admin/settings"

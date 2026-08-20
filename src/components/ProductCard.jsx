@@ -1,10 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import {
   ShoppingCart,
   Check,
 } from "lucide-react";
+
+import {
+  collection,
+  getDocs,
+} from "firebase/firestore";
+
+import { db } from "../firebase/firebase";
 
 import { useCart } from "../context/CartContext";
 
@@ -14,12 +21,113 @@ function ProductCard({ product }) {
   const [added, setAdded] =
     useState(false);
 
-  const price = Number(
-    product.price || 0
-  ).toLocaleString("en-IN");
+  const [offer, setOffer] =
+    useState(null);
+
+  // ======================================================
+  // LOAD ACTIVE OFFER
+  // ======================================================
+
+  useEffect(() => {
+    const loadOffer = async () => {
+      try {
+        const snapshot =
+          await getDocs(
+            collection(db, "offers")
+          );
+
+        const today =
+          new Date()
+            .toISOString()
+            .split("T")[0];
+
+        const activeOffer =
+          snapshot.docs
+            .map((item) => ({
+              id: item.id,
+              ...item.data(),
+            }))
+            .find((item) => {
+              return (
+                item.active === true &&
+                item.discountPercent > 0 &&
+                today >= item.startDate &&
+                today <= item.endDate
+              );
+            });
+
+        setOffer(
+          activeOffer || null
+        );
+      } catch (error) {
+        console.error(
+          "Unable to load offer:",
+          error
+        );
+
+        setOffer(null);
+      }
+    };
+
+    loadOffer();
+  }, []);
+
+  // ======================================================
+  // PRICE CALCULATION
+  // ======================================================
+
+  const originalPrice =
+    Number(product.price || 0);
+
+  const discountPercent =
+    Number(
+      offer?.discountPercent || 0
+    );
+
+  const discountedPrice =
+    offer && discountPercent > 0
+      ? Math.round(
+          originalPrice -
+            (originalPrice *
+              discountPercent) /
+              100
+        )
+      : originalPrice;
+
+  const formattedOriginalPrice =
+    originalPrice.toLocaleString(
+      "en-IN"
+    );
+
+  const formattedDiscountedPrice =
+    discountedPrice.toLocaleString(
+      "en-IN"
+    );
+
+  // ======================================================
+  // ADD TO CART
+  // ======================================================
 
   const handleAddToCart = () => {
-    addToCart(product);
+
+    // Keep original product information
+    // but send the discounted price when
+    // an active offer exists.
+
+    const productToAdd = {
+      ...product,
+
+      originalPrice:
+        originalPrice,
+
+      price:
+        discountedPrice,
+
+      discountPercent:
+        discountPercent || 0,
+    };
+
+    addToCart(productToAdd);
 
     setAdded(true);
 
@@ -39,7 +147,8 @@ function ProductCard({ product }) {
         to={`/product/${product.id}`}
         className="block overflow-hidden"
       >
-        <div className="aspect-square bg-gray-100">
+
+        <div className="relative aspect-square bg-gray-100">
 
           <img
             src={product.image}
@@ -47,7 +156,16 @@ function ProductCard({ product }) {
             className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
           />
 
+          {/* OFFER BADGE */}
+
+          {offer && (
+            <span className="absolute left-3 top-3 rounded-full bg-[#8B2E2E] px-3 py-1.5 text-xs font-bold text-white shadow-md">
+              {discountPercent}% OFF
+            </span>
+          )}
+
         </div>
+
       </Link>
 
       {/* ==================================================
@@ -75,13 +193,39 @@ function ProductCard({ product }) {
           </p>
         )}
 
-        {/* PRICE + CART */}
+        {/* ==================================================
+            PRICE + CART
+        ================================================== */}
 
-        <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="mt-4 flex items-end justify-between gap-3">
 
-          <p className="text-xl font-bold text-[#8B2E2E]">
-            ₹{price}
-          </p>
+          {/* PRICE */}
+
+          <div>
+
+            {offer ? (
+              <>
+                {/* ORIGINAL PRICE */}
+
+                <p className="text-sm text-gray-400 line-through">
+                  ₹{formattedOriginalPrice}
+                </p>
+
+                {/* DISCOUNTED PRICE */}
+
+                <p className="text-xl font-bold text-[#8B2E2E]">
+                  ₹{formattedDiscountedPrice}
+                </p>
+              </>
+            ) : (
+              <p className="text-xl font-bold text-[#8B2E2E]">
+                ₹{formattedOriginalPrice}
+              </p>
+            )}
+
+          </div>
+
+          {/* ADD TO CART */}
 
           <button
             type="button"
