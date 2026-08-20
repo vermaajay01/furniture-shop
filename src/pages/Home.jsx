@@ -28,7 +28,6 @@ import {
 import { db } from "../firebase/firebase";
 
 import ProductCard from "../components/ProductCard";
-import OfferBanner from "../components/OfferBanner";
 
 import { trackVisitor } from "../firebase/visitorTracking";
 
@@ -316,12 +315,6 @@ function Home() {
         </div>
 
       </section>
-
-      {/* ==================================================
-          GLOWING OFFER BANNER
-      ================================================== */}
-
-      <OfferBanner />
 
       {/* ==================================================
           CATEGORIES
