@@ -30,13 +30,19 @@ function AddProduct() {
     material: "",
     image: "",
     description: "",
+    stockQuantity: "1",
     featured: false,
     available: true,
   });
 
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [saving, setSaving] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const [success, setSuccess] =
+    useState("");
 
   // ======================================================
   // HANDLE INPUT
@@ -96,11 +102,20 @@ function AddProduct() {
       return;
     }
 
+    const stockQuantity = Math.max(
+      0,
+      Math.floor(
+        Number(
+          formData.stockQuantity || 0
+        )
+      )
+    );
+
     try {
       setSaving(true);
 
       // ==================================================
-      // SAVE PRODUCT TO FIRESTORE
+      // SAVE PRODUCT
       // ==================================================
 
       await addDoc(
@@ -124,11 +139,16 @@ function AddProduct() {
           description:
             formData.description.trim(),
 
+          stockQuantity,
+
+          // Automatically determine availability
+          // from stock quantity.
+          available:
+            stockQuantity > 0 &&
+            formData.available,
+
           featured:
             formData.featured,
-
-          available:
-            formData.available,
 
           createdAt:
             serverTimestamp(),
@@ -147,7 +167,6 @@ function AddProduct() {
           "/admin/products"
         );
       }, 800);
-
     } catch (err) {
       console.error(
         "Add product error:",
@@ -430,6 +449,40 @@ function AddProduct() {
               </div>
 
               {/* ==================================================
+                  STOCK QUANTITY
+              ================================================== */}
+
+              <div>
+
+                <label className="mb-2 block text-sm font-semibold text-[#2B1714]">
+                  Stock Quantity *
+                </label>
+
+                <div className="relative">
+
+                  <input
+                    type="number"
+                    name="stockQuantity"
+                    min="0"
+                    step="1"
+                    value={
+                      formData.stockQuantity
+                    }
+                    onChange={handleChange}
+                    placeholder="10"
+                    className="w-full border border-gray-200 px-4 py-3.5 text-sm outline-none transition focus:border-[#8B2E2E] focus:ring-1 focus:ring-[#8B2E2E]"
+                  />
+
+                </div>
+
+                <p className="mt-2 text-xs text-gray-400">
+                  Enter 0 if the product is
+                  currently out of stock.
+                </p>
+
+              </div>
+
+              {/* ==================================================
                   IMAGE URL
               ================================================== */}
 
@@ -556,7 +609,7 @@ function AddProduct() {
             </div>
 
             {/* ==================================================
-                OPTIONS
+                PRODUCT OPTIONS
             ================================================== */}
 
             <div className="mt-8 border-t border-gray-100 pt-8">
@@ -580,7 +633,9 @@ function AddProduct() {
                   <input
                     type="checkbox"
                     name="available"
-                    checked={formData.available}
+                    checked={
+                      formData.available
+                    }
                     onChange={handleChange}
                     className="mt-1 h-5 w-5 accent-[#8B2E2E]"
                   />
@@ -588,12 +643,12 @@ function AddProduct() {
                   <div>
 
                     <p className="font-semibold text-[#6B1E1E]">
-                      Available
+                      Show Product
                     </p>
 
                     <p className="mt-1 text-xs text-gray-500">
-                      Show this product to
-                      customers.
+                      Allow this product to
+                      appear on the website.
                     </p>
 
                   </div>
@@ -613,7 +668,9 @@ function AddProduct() {
                   <input
                     type="checkbox"
                     name="featured"
-                    checked={formData.featured}
+                    checked={
+                      formData.featured
+                    }
                     onChange={handleChange}
                     className="mt-1 h-5 w-5 accent-[#B8863B]"
                   />
@@ -631,6 +688,37 @@ function AddProduct() {
                   </div>
 
                 </label>
+
+              </div>
+
+              {/* STOCK PREVIEW */}
+
+              <div className="mt-5 border border-gray-200 bg-[#F8F1E7] p-5">
+
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  Customer Stock Preview
+                </p>
+
+                {Number(
+                  formData.stockQuantity || 0
+                ) > 0 ? (
+                  <p className="mt-2 font-semibold text-green-700">
+                    ✓{" "}
+                    {Number(
+                      formData.stockQuantity
+                    )}{" "}
+                    {Number(
+                      formData.stockQuantity
+                    ) === 1
+                      ? "item"
+                      : "items"}{" "}
+                    in stock
+                  </p>
+                ) : (
+                  <p className="mt-2 font-semibold text-red-600">
+                    ✕ Out of Stock
+                  </p>
+                )}
 
               </div>
 

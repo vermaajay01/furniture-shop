@@ -7,6 +7,9 @@ import {
   MessageCircle,
   X,
   ZoomIn,
+  PackageCheck,
+  AlertTriangle,
+  XCircle,
 } from "lucide-react";
 
 import {
@@ -21,7 +24,8 @@ import { db } from "../firebase/firebase";
 function ProductDetails() {
   const { id } = useParams();
 
-  const [product, setProduct] = useState(null);
+  const [product, setProduct] =
+    useState(null);
 
   const [whatsappNumber, setWhatsappNumber] =
     useState("919596492640");
@@ -148,6 +152,8 @@ function ProductDetails() {
                 Number(
                   item.discountPercent
                 ) > 0 &&
+                item.startDate &&
+                item.endDate &&
                 today >= item.startDate &&
                 today <= item.endDate
               );
@@ -156,7 +162,6 @@ function ProductDetails() {
         setOffer(
           activeOffer || null
         );
-
       } catch (err) {
         console.error(
           "Product details error:",
@@ -265,6 +270,24 @@ function ProductDetails() {
   }
 
   // ======================================================
+  // STOCK
+  // ======================================================
+
+  const stockQuantity = Math.max(
+    0,
+    Number(
+      product.stockQuantity ?? 0
+    )
+  );
+
+  const isOutOfStock =
+    stockQuantity <= 0;
+
+  const isLowStock =
+    stockQuantity > 0 &&
+    stockQuantity <= 2;
+
+  // ======================================================
   // PRICE CALCULATION
   // ======================================================
 
@@ -309,6 +332,15 @@ function ProductDetails() {
       ? `₹${formattedDiscountedPrice} (${discountPercent}% OFF, original price ₹${formattedOriginalPrice})`
       : `₹${formattedOriginalPrice}`;
 
+  const whatsappStockText =
+    isOutOfStock
+      ? "Currently out of stock"
+      : `${stockQuantity} ${
+          stockQuantity === 1
+            ? "item"
+            : "items"
+        } currently available`;
+
   const whatsappMessage = `
 Hello Hari Om Furniture House 👋
 
@@ -322,6 +354,8 @@ I am interested in this product:
   }
 
 💰 Price: ${whatsappPriceText}
+
+📦 Stock: ${whatsappStockText}
 
 🪵 Material: ${
     product.material ||
@@ -352,7 +386,9 @@ Thank you.
 
         <div className="mx-auto max-w-7xl">
 
-          {/* BACK */}
+          {/* ==================================================
+              BACK
+          ================================================== */}
 
           <Link
             to="/shop"
@@ -362,7 +398,9 @@ Thank you.
             Back to Shop
           </Link>
 
-          {/* PRODUCT */}
+          {/* ==================================================
+              PRODUCT
+          ================================================== */}
 
           <div className="grid overflow-hidden bg-white shadow-sm md:grid-cols-2">
 
@@ -384,7 +422,9 @@ Thank you.
                   event.key ===
                     " "
                 ) {
-                  setImagePreview(true);
+                  setImagePreview(
+                    true
+                  );
                 }
               }}
               aria-label="Open product image preview"
@@ -393,10 +433,16 @@ Thank you.
               <img
                 src={product.image}
                 alt={product.name}
-                className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                className={`h-full w-full object-cover transition duration-500 group-hover:scale-105 ${
+                  isOutOfStock
+                    ? "opacity-70"
+                    : ""
+                }`}
               />
 
-              {/* ZOOM INDICATOR */}
+              {/* ==================================================
+                  ZOOM INDICATOR
+              ================================================== */}
 
               <div className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full bg-black/60 px-4 py-2 text-sm font-medium text-white opacity-0 backdrop-blur-sm transition duration-300 group-hover:opacity-100">
 
@@ -406,11 +452,27 @@ Thank you.
 
               </div>
 
-              {/* OFFER BADGE */}
+              {/* ==================================================
+                  OFFER BADGE
+              ================================================== */}
 
               {hasOffer && (
                 <div className="absolute left-4 top-4 rounded-full bg-[#8B2E2E] px-4 py-2 text-sm font-bold text-white shadow-lg">
                   {discountPercent}% OFF
+                </div>
+              )}
+
+              {/* ==================================================
+                  OUT OF STOCK BADGE
+              ================================================== */}
+
+              {isOutOfStock && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+
+                  <span className="rounded-full bg-[#6B1E1E] px-6 py-3 text-sm font-bold uppercase tracking-wider text-white shadow-xl">
+                    Out of Stock
+                  </span>
+
                 </div>
               )}
 
@@ -442,7 +504,6 @@ Thank you.
 
                 {hasOffer ? (
                   <>
-
                     {/* ORIGINAL PRICE */}
 
                     <p className="text-lg text-gray-400 line-through">
@@ -462,12 +523,95 @@ Thank you.
                       </span>
 
                     </div>
-
                   </>
                 ) : (
                   <p className="text-3xl font-bold text-[#8B2E2E]">
                     ₹{formattedOriginalPrice}
                   </p>
+                )}
+
+              </div>
+
+              {/* ==================================================
+                  STOCK STATUS
+              ================================================== */}
+
+              <div className="mt-6">
+
+                {isOutOfStock ? (
+                  <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+
+                    <XCircle
+                      size={21}
+                    />
+
+                    <div>
+
+                      <p className="font-semibold">
+                        Out of Stock
+                      </p>
+
+                      <p className="mt-0.5 text-xs text-red-500">
+                        This product is
+                        currently unavailable.
+                      </p>
+
+                    </div>
+
+                  </div>
+                ) : isLowStock ? (
+                  <div className="flex items-center gap-2 rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 text-orange-700">
+
+                    <AlertTriangle
+                      size={21}
+                    />
+
+                    <div>
+
+                      <p className="font-semibold">
+                        Only{" "}
+                        {stockQuantity}{" "}
+                        {stockQuantity ===
+                        1
+                          ? "item"
+                          : "items"}{" "}
+                        left
+                      </p>
+
+                      <p className="mt-0.5 text-xs text-orange-500">
+                        Order soon before
+                        it sells out.
+                      </p>
+
+                    </div>
+
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-700">
+
+                    <PackageCheck
+                      size={21}
+                    />
+
+                    <div>
+
+                      <p className="font-semibold">
+                        {stockQuantity}{" "}
+                        {stockQuantity ===
+                        1
+                          ? "item"
+                          : "items"}{" "}
+                        in stock
+                      </p>
+
+                      <p className="mt-0.5 text-xs text-green-600">
+                        Available for
+                        enquiry.
+                      </p>
+
+                    </div>
+
+                  </div>
                 )}
 
               </div>
@@ -504,28 +648,59 @@ Thank you.
                 </div>
               )}
 
-              {/* WHATSAPP */}
+              {/* ==================================================
+                  WHATSAPP
+              ================================================== */}
 
-              <a
-                href={whatsappURL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-8 flex items-center justify-center gap-2 bg-[#8B2E2E] px-7 py-4 font-semibold text-white transition hover:bg-[#6B1E1E]"
-              >
+              {isOutOfStock ? (
+                <div className="mt-8">
 
-                <MessageCircle
-                  size={21}
-                />
+                  <button
+                    type="button"
+                    disabled
+                    className="flex w-full cursor-not-allowed items-center justify-center gap-2 bg-gray-300 px-7 py-4 font-semibold text-gray-500"
+                  >
 
-                Enquire on WhatsApp
+                    <XCircle size={21} />
 
-              </a>
+                    Currently Unavailable
 
-              <p className="mt-3 text-center text-xs text-gray-400">
-                Product details and current offer
-                price will be included in your
-                WhatsApp enquiry.
-              </p>
+                  </button>
+
+                  <p className="mt-3 text-center text-xs text-gray-400">
+                    This product is currently
+                    out of stock. Please check
+                    back later.
+                  </p>
+
+                </div>
+              ) : (
+                <>
+
+                  <a
+                    href={whatsappURL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-8 flex items-center justify-center gap-2 bg-[#8B2E2E] px-7 py-4 font-semibold text-white transition hover:bg-[#6B1E1E]"
+                  >
+
+                    <MessageCircle
+                      size={21}
+                    />
+
+                    Enquire on WhatsApp
+
+                  </a>
+
+                  <p className="mt-3 text-center text-xs text-gray-400">
+                    Product details, stock and
+                    current offer price will be
+                    included in your WhatsApp
+                    enquiry.
+                  </p>
+
+                </>
+              )}
 
             </div>
 
@@ -560,7 +735,9 @@ Thank you.
             className="absolute right-5 top-5 z-[110] flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
             aria-label="Close image preview"
           >
+
             <X size={25} />
+
           </button>
 
           {/* IMAGE CONTAINER */}
@@ -588,6 +765,7 @@ Thank you.
 
         </div>
       )}
+
     </>
   );
 }

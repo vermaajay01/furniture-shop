@@ -20,9 +20,35 @@ export function CartProvider({
             CART_KEY
           );
 
-        return savedCart
+        const parsedCart = savedCart
           ? JSON.parse(savedCart)
           : [];
+
+        // ==================================================
+        // CLEAN OLD / INVALID CART DATA
+        // ==================================================
+
+        if (!Array.isArray(parsedCart)) {
+          return [];
+        }
+
+        return parsedCart.map((item) => ({
+          ...item,
+
+          quantity: Math.max(
+            1,
+            Number(
+              item.quantity || 1
+            )
+          ),
+
+          stockQuantity: Math.max(
+            0,
+            Number(
+              item.stockQuantity ?? 0
+            )
+          ),
+        }));
       } catch {
         return [];
       }
@@ -40,11 +66,37 @@ export function CartProvider({
   }, [cartItems]);
 
   // ======================================================
+  // GET STOCK
+  // ======================================================
+
+  const getStockQuantity = (
+    product
+  ) => {
+    return Math.max(
+      0,
+      Number(
+        product?.stockQuantity ?? 0
+      )
+    );
+  };
+
+  // ======================================================
   // ADD TO CART
   // ======================================================
 
   const addToCart = (product) => {
     setCartItems((previous) => {
+      const stockQuantity =
+        getStockQuantity(product);
+
+      // ==================================================
+      // OUT OF STOCK
+      // ==================================================
+
+      if (stockQuantity <= 0) {
+        return previous;
+      }
+
       const existing =
         previous.find(
           (item) =>
@@ -56,17 +108,29 @@ export function CartProvider({
       // ==================================================
 
       if (existing) {
+        // Don't allow quantity above stock.
+        if (
+          existing.quantity >=
+          stockQuantity
+        ) {
+          return previous;
+        }
+
         return previous.map(
           (item) =>
             item.id === product.id
               ? {
                   ...item,
 
-                  // Keep existing product
-                  // information
-
                   quantity:
-                    item.quantity + 1,
+                    Math.min(
+                      item.quantity + 1,
+                      stockQuantity
+                    ),
+
+                  // Keep latest stock
+                  stockQuantity:
+                    stockQuantity,
 
                   // Keep offer information
                   originalPrice:
@@ -84,7 +148,7 @@ export function CartProvider({
                         0
                     ),
 
-                  // Use latest selling price
+                  // Latest selling price
                   price:
                     Number(
                       product.price ??
@@ -130,7 +194,7 @@ export function CartProvider({
           price:
             currentPrice,
 
-          // Original price before discount
+          // Original price
           originalPrice:
             originalPrice,
 
@@ -148,6 +212,10 @@ export function CartProvider({
           material:
             product.material || "",
 
+          // Current available stock
+          stockQuantity:
+            stockQuantity,
+
           quantity: 1,
         },
       ];
@@ -155,22 +223,48 @@ export function CartProvider({
   };
 
   // ======================================================
-  // UPDATE QUANTITY
+  // INCREASE QUANTITY
   // ======================================================
 
   const increaseQuantity = (id) => {
     setCartItems((previous) =>
-      previous.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              quantity:
-                item.quantity + 1,
-            }
-          : item
-      )
+      previous.map((item) => {
+        if (item.id !== id) {
+          return item;
+        }
+
+        const stockQuantity =
+          Math.max(
+            0,
+            Number(
+              item.stockQuantity ?? 0
+            )
+          );
+
+        // Already at maximum stock
+        if (
+          item.quantity >=
+          stockQuantity
+        ) {
+          return item;
+        }
+
+        return {
+          ...item,
+
+          quantity:
+            Math.min(
+              item.quantity + 1,
+              stockQuantity
+            ),
+        };
+      })
     );
   };
+
+  // ======================================================
+  // DECREASE QUANTITY
+  // ======================================================
 
   const decreaseQuantity = (id) => {
     setCartItems((previous) =>
@@ -179,6 +273,7 @@ export function CartProvider({
           item.id === id
             ? {
                 ...item,
+
                 quantity:
                   item.quantity - 1,
               }
@@ -188,6 +283,59 @@ export function CartProvider({
           (item) =>
             item.quantity > 0
         )
+    );
+  };
+
+  // ======================================================
+  // CAN ADD MORE?
+  // ======================================================
+
+  const canAddMore = (id) => {
+    const item =
+      cartItems.find(
+        (cartItem) =>
+          cartItem.id === id
+      );
+
+    if (!item) {
+      return true;
+    }
+
+    const stockQuantity =
+      Math.max(
+        0,
+        Number(
+          item.stockQuantity ?? 0
+        )
+      );
+
+    return (
+      stockQuantity > 0 &&
+      item.quantity <
+        stockQuantity
+    );
+  };
+
+  // ======================================================
+  // GET AVAILABLE STOCK
+  // ======================================================
+
+  const getAvailableStock = (id) => {
+    const item =
+      cartItems.find(
+        (cartItem) =>
+          cartItem.id === id
+      );
+
+    if (!item) {
+      return 0;
+    }
+
+    return Math.max(
+      0,
+      Number(
+        item.stockQuantity ?? 0
+      )
     );
   };
 
@@ -232,6 +380,7 @@ export function CartProvider({
 
   // IMPORTANT:
   // item.price is the current selling price.
+  //
   // Therefore, when an offer exists,
   // the discounted price is used here.
 
@@ -270,6 +419,10 @@ export function CartProvider({
         removeFromCart,
 
         clearCart,
+
+        canAddMore,
+
+        getAvailableStock,
       }}
     >
       {children}

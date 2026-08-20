@@ -4,6 +4,12 @@ import { Link } from "react-router-dom";
 import {
   ShoppingCart,
   Check,
+  PackageCheck,
+  AlertTriangle,
+  XCircle,
+  Minus,
+  Plus,
+  Eye,
 } from "lucide-react";
 
 import {
@@ -16,13 +22,30 @@ import { db } from "../firebase/firebase";
 import { useCart } from "../context/CartContext";
 
 function ProductCard({ product }) {
-  const { addToCart } = useCart();
-
-  const [added, setAdded] =
-    useState(false);
+  const {
+    addToCart,
+    cartItems,
+    increaseQuantity,
+    decreaseQuantity,
+  } = useCart();
 
   const [offer, setOffer] =
     useState(null);
+
+  // ======================================================
+  // FIND CURRENT CART ITEM
+  // ======================================================
+
+  const cartItem =
+    cartItems.find(
+      (item) =>
+        item.id === product.id
+    );
+
+  const cartQuantity =
+    Number(
+      cartItem?.quantity || 0
+    );
 
   // ======================================================
   // LOAD ACTIVE OFFER
@@ -33,7 +56,10 @@ function ProductCard({ product }) {
       try {
         const snapshot =
           await getDocs(
-            collection(db, "offers")
+            collection(
+              db,
+              "offers"
+            )
           );
 
         const today =
@@ -50,9 +76,13 @@ function ProductCard({ product }) {
             .find((item) => {
               return (
                 item.active === true &&
-                item.discountPercent > 0 &&
-                today >= item.startDate &&
-                today <= item.endDate
+                Number(
+                  item.discountPercent
+                ) > 0 &&
+                today >=
+                  item.startDate &&
+                today <=
+                  item.endDate
               );
             });
 
@@ -73,6 +103,29 @@ function ProductCard({ product }) {
   }, []);
 
   // ======================================================
+  // STOCK
+  // ======================================================
+
+  const stockQuantity =
+    Math.max(
+      0,
+      Number(
+        product.stockQuantity ?? 0
+      )
+    );
+
+  const isOutOfStock =
+    stockQuantity <= 0;
+
+  const isLowStock =
+    stockQuantity > 0 &&
+    stockQuantity <= 2;
+
+  const maximumReached =
+    cartQuantity >=
+    stockQuantity;
+
+  // ======================================================
   // PRICE CALCULATION
   // ======================================================
 
@@ -84,8 +137,12 @@ function ProductCard({ product }) {
       offer?.discountPercent || 0
     );
 
+  const hasOffer =
+    !!offer &&
+    discountPercent > 0;
+
   const discountedPrice =
-    offer && discountPercent > 0
+    hasOffer
       ? Math.round(
           originalPrice -
             (originalPrice *
@@ -109,10 +166,9 @@ function ProductCard({ product }) {
   // ======================================================
 
   const handleAddToCart = () => {
-
-    // Keep original product information
-    // but send the discounted price when
-    // an active offer exists.
+    if (isOutOfStock) {
+      return;
+    }
 
     const productToAdd = {
       ...product,
@@ -125,15 +181,43 @@ function ProductCard({ product }) {
 
       discountPercent:
         discountPercent || 0,
+
+      stockQuantity:
+        stockQuantity,
     };
 
     addToCart(productToAdd);
+  };
 
-    setAdded(true);
+  // ======================================================
+  // INCREASE
+  // ======================================================
 
-    setTimeout(() => {
-      setAdded(false);
-    }, 1500);
+  const handleIncrease = () => {
+    if (
+      isOutOfStock ||
+      maximumReached
+    ) {
+      return;
+    }
+
+    increaseQuantity(
+      product.id
+    );
+  };
+
+  // ======================================================
+  // DECREASE
+  // ======================================================
+
+  const handleDecrease = () => {
+    if (cartQuantity <= 0) {
+      return;
+    }
+
+    decreaseQuantity(
+      product.id
+    );
   };
 
   return (
@@ -153,15 +237,31 @@ function ProductCard({ product }) {
           <img
             src={product.image}
             alt={product.name}
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+            className={`h-full w-full object-cover transition duration-500 group-hover:scale-105 ${
+              isOutOfStock
+                ? "opacity-70"
+                : ""
+            }`}
           />
 
           {/* OFFER BADGE */}
 
-          {offer && (
+          {hasOffer && (
             <span className="absolute left-3 top-3 rounded-full bg-[#8B2E2E] px-3 py-1.5 text-xs font-bold text-white shadow-md">
               {discountPercent}% OFF
             </span>
+          )}
+
+          {/* OUT OF STOCK */}
+
+          {isOutOfStock && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+
+              <span className="rounded-full bg-[#6B1E1E] px-5 py-2.5 text-sm font-bold uppercase tracking-wider text-white shadow-lg">
+                Out of Stock
+              </span>
+
+            </div>
           )}
 
         </div>
@@ -194,64 +294,213 @@ function ProductCard({ product }) {
         )}
 
         {/* ==================================================
+            STOCK STATUS
+        ================================================== */}
+
+        <div className="mt-3">
+
+          {isOutOfStock ? (
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-red-600">
+
+              <XCircle size={17} />
+
+              Out of Stock
+
+            </div>
+          ) : isLowStock ? (
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-orange-600">
+
+              <AlertTriangle
+                size={17}
+              />
+
+              Only {stockQuantity}{" "}
+              {stockQuantity === 1
+                ? "item"
+                : "items"}{" "}
+              left
+
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-green-700">
+
+              <PackageCheck
+                size={17}
+              />
+
+              {stockQuantity}{" "}
+              {stockQuantity === 1
+                ? "item"
+                : "items"}{" "}
+              in stock
+
+            </div>
+          )}
+
+        </div>
+
+        {/* ==================================================
             PRICE + CART
         ================================================== */}
 
-        <div className="mt-4 flex items-end justify-between gap-3">
+        <div className="mt-4">
 
-          {/* PRICE */}
+          <div className="flex items-end justify-between gap-3">
 
-          <div>
+            {/* PRICE */}
 
-            {offer ? (
-              <>
-                {/* ORIGINAL PRICE */}
+            <div>
 
-                <p className="text-sm text-gray-400 line-through">
+              {hasOffer ? (
+                <>
+                  <p className="text-sm text-gray-400 line-through">
+                    ₹{formattedOriginalPrice}
+                  </p>
+
+                  <p className="text-xl font-bold text-[#8B2E2E]">
+                    ₹{formattedDiscountedPrice}
+                  </p>
+                </>
+              ) : (
+                <p className="text-xl font-bold text-[#8B2E2E]">
                   ₹{formattedOriginalPrice}
                 </p>
+              )}
 
-                {/* DISCOUNTED PRICE */}
+            </div>
 
-                <p className="text-xl font-bold text-[#8B2E2E]">
-                  ₹{formattedDiscountedPrice}
-                </p>
-              </>
+            {/* ==================================================
+                CART CONTROLS
+            ================================================== */}
+
+            {isOutOfStock ? (
+              <button
+                type="button"
+                disabled
+                className="flex cursor-not-allowed items-center gap-2 bg-gray-400 px-4 py-2.5 text-sm font-semibold text-white"
+              >
+
+                <XCircle size={17} />
+
+                Unavailable
+
+              </button>
+            ) : cartQuantity === 0 ? (
+
+              /* ================================================
+                 ADD TO CART
+              ================================================ */
+
+              <button
+                type="button"
+                onClick={
+                  handleAddToCart
+                }
+                className="flex items-center gap-2 bg-[#6B1E1E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#8B2E2E]"
+              >
+
+                <ShoppingCart
+                  size={17}
+                />
+
+                Add
+
+              </button>
+
             ) : (
-              <p className="text-xl font-bold text-[#8B2E2E]">
-                ₹{formattedOriginalPrice}
-              </p>
+
+              /* ================================================
+                 QUANTITY + VIEW CART
+              ================================================ */
+
+              <div className="flex flex-col items-end gap-2">
+
+                <div className="flex items-center">
+
+                  {/* MINUS */}
+
+                  <button
+                    type="button"
+                    onClick={
+                      handleDecrease
+                    }
+                    className="flex h-10 w-9 items-center justify-center bg-[#6B1E1E] text-white transition hover:bg-[#8B2E2E]"
+                    aria-label="Decrease quantity"
+                  >
+
+                    <Minus
+                      size={16}
+                    />
+
+                  </button>
+
+                  {/* QUANTITY */}
+
+                  <span className="flex h-10 min-w-10 items-center justify-center border-y border-gray-200 bg-white px-2 text-sm font-bold text-[#6B1E1E]">
+                    {cartQuantity}
+                  </span>
+
+                  {/* PLUS */}
+
+                  <button
+                    type="button"
+                    onClick={
+                      handleIncrease
+                    }
+                    disabled={
+                      maximumReached
+                    }
+                    className="flex h-10 w-9 items-center justify-center bg-[#6B1E1E] text-white transition hover:bg-[#8B2E2E] disabled:cursor-not-allowed disabled:bg-gray-300"
+                    aria-label="Increase quantity"
+                  >
+
+                    <Plus
+                      size={16}
+                    />
+
+                  </button>
+
+                </div>
+
+              </div>
+
             )}
 
           </div>
 
-          {/* ADD TO CART */}
+          {/* ==================================================
+              VIEW CART
+          ================================================== */}
 
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white transition ${
-              added
-                ? "bg-green-700"
-                : "bg-[#6B1E1E] hover:bg-[#8B2E2E]"
-            }`}
-          >
+          {cartQuantity > 0 && (
+            <Link
+              to="/cart"
+              className="mt-3 flex w-full items-center justify-center gap-2 border border-[#6B1E1E] px-4 py-2.5 text-sm font-semibold text-[#6B1E1E] transition hover:bg-[#6B1E1E] hover:text-white"
+            >
 
-            {added ? (
-              <>
-                <Check size={17} />
-                Added
-              </>
-            ) : (
-              <>
-                <ShoppingCart
-                  size={17}
-                />
-                Add
-              </>
+              <ShoppingCart
+                size={17}
+              />
+
+              View Cart
+
+              <span className="rounded-full bg-[#6B1E1E] px-2 py-0.5 text-xs text-white">
+                {cartQuantity}
+              </span>
+
+            </Link>
+          )}
+
+          {/* MAXIMUM STOCK */}
+
+          {cartQuantity > 0 &&
+            maximumReached && (
+              <p className="mt-2 text-right text-[11px] font-medium text-orange-600">
+                Maximum{" "}
+                {stockQuantity}{" "}
+                available
+              </p>
             )}
-
-          </button>
 
         </div>
 

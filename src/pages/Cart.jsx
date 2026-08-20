@@ -11,7 +11,9 @@ import {
   User,
   Phone,
   MapPin,
-  Tag,
+  PackageCheck,
+  AlertTriangle,
+  XCircle,
 } from "lucide-react";
 
 import {
@@ -35,16 +37,19 @@ function Cart() {
     clearCart,
   } = useCart();
 
-  const [settings, setSettings] = useState({
-    whatsapp: "919596492640",
-    shopName: "हरि ॐ Furniture House",
-  });
+  const [settings, setSettings] =
+    useState({
+      whatsapp: "919596492640",
+      shopName:
+        "हरि ॐ Furniture House",
+    });
 
-  const [customer, setCustomer] = useState({
-    name: "",
-    phone: "",
-    address: "",
-  });
+  const [customer, setCustomer] =
+    useState({
+      name: "",
+      phone: "",
+      address: "",
+    });
 
   const [sending, setSending] =
     useState(false);
@@ -86,7 +91,9 @@ function Cart() {
   // CUSTOMER DETAILS
   // ======================================================
 
-  const handleCustomerChange = (e) => {
+  const handleCustomerChange = (
+    e
+  ) => {
     const {
       name,
       value,
@@ -99,18 +106,96 @@ function Cart() {
   };
 
   // ======================================================
+  // STOCK HELPERS
+  // ======================================================
+
+  const getStockQuantity = (
+    item
+  ) => {
+    return Math.max(
+      0,
+      Number(
+        item.stockQuantity ?? 0
+      )
+    );
+  };
+
+  const hasStockIssue =
+    cartItems.some((item) => {
+      const stockQuantity =
+        getStockQuantity(item);
+
+      return (
+        stockQuantity <= 0 ||
+        Number(item.quantity || 0) >
+          stockQuantity
+      );
+    });
+
+  // ======================================================
   // SEND ORDER
   // ======================================================
 
-  const sendOrderToWhatsApp = async (e) => {
+  const sendOrderToWhatsApp = async (
+    e
+  ) => {
     e.preventDefault();
 
     if (!cartItems.length) {
       return;
     }
 
+    // ==================================================
+    // CHECK STOCK BEFORE ORDER
+    // ==================================================
+
+    const stockProblem =
+      cartItems.find((item) => {
+        const stockQuantity =
+          getStockQuantity(item);
+
+        return (
+          stockQuantity <= 0 ||
+          Number(item.quantity || 0) >
+            stockQuantity
+        );
+      });
+
+    if (stockProblem) {
+      const stockQuantity =
+        getStockQuantity(
+          stockProblem
+        );
+
+      if (stockQuantity <= 0) {
+        alert(
+          `${stockProblem.name} is currently out of stock. Please remove it from your cart.`
+        );
+      } else {
+        alert(
+          `Only ${stockQuantity} ${
+            stockQuantity === 1
+              ? "item"
+              : "items"
+          } of ${stockProblem.name} ${
+            stockQuantity === 1
+              ? "is"
+              : "are"
+          } available. Please update your quantity.`
+        );
+      }
+
+      return;
+    }
+
+    // ==================================================
+    // CUSTOMER VALIDATION
+    // ==================================================
+
     if (!customer.name.trim()) {
-      alert("Please enter your name.");
+      alert(
+        "Please enter your name."
+      );
       return;
     }
 
@@ -127,6 +212,10 @@ function Cart() {
       );
       return;
     }
+
+    // ==================================================
+    // WHATSAPP NUMBER
+    // ==================================================
 
     const whatsappNumber = String(
       settings.whatsapp || ""
@@ -161,37 +250,50 @@ function Cart() {
 
           const discountPercent =
             Number(
-              item.discountPercent || 0
+              item.discountPercent ||
+                0
             );
 
           const quantity = Number(
             item.quantity || 1
           );
 
+          const stockQuantity =
+            getStockQuantity(item);
+
           const itemTotal =
             price * quantity;
 
           return {
             productId: item.id,
+
             name: item.name,
+
             category:
               item.category ||
               "Furniture",
+
             material:
               item.material || "",
+
             image:
               item.image || "",
 
             // Current selling price
             price,
 
-            // Original price before offer
+            // Original price
             originalPrice,
 
-            // Discount information
+            // Discount
             discountPercent,
 
+            // Ordered quantity
             quantity,
+
+            // Available stock at
+            // time of order
+            stockQuantity,
 
             itemTotal,
           };
@@ -269,7 +371,8 @@ Material: ${
           // ==================================================
 
           if (
-            item.discountPercent > 0 &&
+            item.discountPercent >
+              0 &&
             item.originalPrice >
               item.price
           ) {
@@ -288,8 +391,13 @@ Price: ₹${item.price.toLocaleString(
             )}`;
           }
 
+          // ==================================================
+          // STOCK INFORMATION
+          // ==================================================
+
           message += `
 Quantity: ${item.quantity}
+Available Stock: ${item.stockQuantity}
 Item Total: ₹${item.itemTotal.toLocaleString(
             "en-IN"
           )}`;
@@ -309,6 +417,10 @@ Please contact me regarding availability,
 delivery and final pricing.
 
 Thank you.`;
+
+      // ==================================================
+      // OPEN WHATSAPP
+      // ==================================================
 
       const whatsappURL =
         `https://wa.me/${whatsappNumber}?text=` +
@@ -424,6 +536,36 @@ Thank you.`;
 
         </div>
 
+        {/* ==================================================
+            GLOBAL STOCK WARNING
+        ================================================== */}
+
+        {hasStockIssue && (
+          <div className="mb-6 flex items-start gap-3 border border-orange-200 bg-orange-50 p-4 text-sm text-orange-700">
+
+            <AlertTriangle
+              size={20}
+              className="mt-0.5 shrink-0"
+            />
+
+            <div>
+
+              <p className="font-semibold">
+                Please update your cart
+              </p>
+
+              <p className="mt-1">
+                One or more products have
+                insufficient stock. Update
+                the quantities before placing
+                your order.
+              </p>
+
+            </div>
+
+          </div>
+        )}
+
         <div className="grid gap-8 lg:grid-cols-[1fr_400px]">
 
           {/* ==================================================
@@ -451,16 +593,33 @@ Thank you.`;
                     0
                 );
 
+              const stockQuantity =
+                getStockQuantity(item);
+
+              const quantity =
+                Number(
+                  item.quantity || 1
+                );
+
               const hasDiscount =
                 discountPercent > 0 &&
                 originalPrice >
                   currentPrice;
 
+              const isOutOfStock =
+                stockQuantity <= 0;
+
+              const isLowStock =
+                stockQuantity > 0 &&
+                stockQuantity <= 2;
+
+              const maximumReached =
+                quantity >=
+                stockQuantity;
+
               const itemTotal =
                 currentPrice *
-                Number(
-                  item.quantity || 1
-                );
+                quantity;
 
               return (
                 <div
@@ -482,12 +641,26 @@ Thank you.`;
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="h-full w-full object-cover"
+                        className={`h-full w-full object-cover ${
+                          isOutOfStock
+                            ? "opacity-60"
+                            : ""
+                        }`}
                       />
 
                       {hasDiscount && (
                         <span className="absolute left-2 top-2 rounded-full bg-[#8B2E2E] px-2 py-1 text-[10px] font-bold text-white">
                           {discountPercent}% OFF
+                        </span>
+                      )}
+
+                      {isOutOfStock && (
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/25">
+
+                          <span className="rounded-full bg-[#6B1E1E] px-3 py-1.5 text-[10px] font-bold uppercase text-white">
+                            Out of Stock
+                          </span>
+
                         </span>
                       )}
 
@@ -516,6 +689,57 @@ Thank you.`;
                           {item.material}
                         </p>
                       )}
+
+                      {/* ==================================================
+                          STOCK STATUS
+                      ================================================== */}
+
+                      <div className="mt-3">
+
+                        {isOutOfStock ? (
+                          <div className="flex items-center gap-1.5 text-sm font-semibold text-red-600">
+
+                            <XCircle
+                              size={17}
+                            />
+
+                            Out of Stock
+
+                          </div>
+                        ) : isLowStock ? (
+                          <div className="flex items-center gap-1.5 text-sm font-semibold text-orange-600">
+
+                            <AlertTriangle
+                              size={17}
+                            />
+
+                            Only{" "}
+                            {stockQuantity}{" "}
+                            {stockQuantity ===
+                            1
+                              ? "item"
+                              : "items"}{" "}
+                            available
+
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-sm font-semibold text-green-700">
+
+                            <PackageCheck
+                              size={17}
+                            />
+
+                            {stockQuantity}{" "}
+                            {stockQuantity ===
+                            1
+                              ? "item"
+                              : "items"}{" "}
+                            in stock
+
+                          </div>
+                        )}
+
+                      </div>
 
                       {/* ==================================================
                           PRICE
@@ -564,35 +788,65 @@ Thank you.`;
 
                     <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
 
-                      <div className="flex items-center border border-gray-200">
+                      <div>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            decreaseQuantity(
-                              item.id
-                            )
-                          }
-                          className="flex h-9 w-9 items-center justify-center hover:bg-[#F8F1E7]"
-                        >
-                          <Minus size={16} />
-                        </button>
+                        <div className="flex items-center border border-gray-200">
 
-                        <span className="flex h-9 min-w-10 items-center justify-center border-x border-gray-200 text-sm font-semibold">
-                          {item.quantity}
-                        </span>
+                          {/* MINUS */}
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            increaseQuantity(
-                              item.id
-                            )
-                          }
-                          className="flex h-9 w-9 items-center justify-center hover:bg-[#F8F1E7]"
-                        >
-                          <Plus size={16} />
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              decreaseQuantity(
+                                item.id
+                              )
+                            }
+                            disabled={
+                              quantity <= 1
+                            }
+                            className="flex h-9 w-9 items-center justify-center transition hover:bg-[#F8F1E7] disabled:cursor-not-allowed disabled:opacity-40"
+                            aria-label="Decrease quantity"
+                          >
+                            <Minus size={16} />
+                          </button>
+
+                          {/* QUANTITY */}
+
+                          <span className="flex h-9 min-w-10 items-center justify-center border-x border-gray-200 text-sm font-semibold">
+                            {quantity}
+                          </span>
+
+                          {/* PLUS */}
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              increaseQuantity(
+                                item.id
+                              )
+                            }
+                            disabled={
+                              isOutOfStock ||
+                              maximumReached
+                            }
+                            className="flex h-9 w-9 items-center justify-center transition hover:bg-[#F8F1E7] disabled:cursor-not-allowed disabled:opacity-40"
+                            aria-label="Increase quantity"
+                          >
+                            <Plus size={16} />
+                          </button>
+
+                        </div>
+
+                        {/* MAX STOCK MESSAGE */}
+
+                        {!isOutOfStock &&
+                          maximumReached && (
+                            <p className="mt-2 text-[11px] font-medium text-orange-600">
+                              Maximum{" "}
+                              {stockQuantity}{" "}
+                              available
+                            </p>
+                          )}
 
                       </div>
 
@@ -612,7 +866,8 @@ Thank you.`;
                               item.id
                             )
                           }
-                          className="text-gray-400 hover:text-red-600"
+                          className="text-gray-400 transition hover:text-red-600"
+                          aria-label={`Remove ${item.name}`}
                         >
                           <Trash2 size={18} />
                         </button>
@@ -664,7 +919,9 @@ Thank you.`;
                   <input
                     type="text"
                     name="name"
-                    value={customer.name}
+                    value={
+                      customer.name
+                    }
                     onChange={
                       handleCustomerChange
                     }
@@ -694,7 +951,9 @@ Thank you.`;
                   <input
                     type="tel"
                     name="phone"
-                    value={customer.phone}
+                    value={
+                      customer.phone
+                    }
                     onChange={
                       handleCustomerChange
                     }
@@ -739,6 +998,31 @@ Thank you.`;
               </div>
 
               {/* ==================================================
+                  STOCK CHECKOUT WARNING
+              ================================================== */}
+
+              {hasStockIssue && (
+                <div className="border border-red-200 bg-red-50 p-3 text-xs leading-5 text-red-700">
+
+                  <div className="flex items-start gap-2">
+
+                    <XCircle
+                      size={17}
+                      className="mt-0.5 shrink-0"
+                    />
+
+                    <p>
+                      Please correct the stock
+                      quantities above before
+                      placing your order.
+                    </p>
+
+                  </div>
+
+                </div>
+              )}
+
+              {/* ==================================================
                   TOTAL
               ================================================== */}
 
@@ -767,7 +1051,10 @@ Thank you.`;
 
               <button
                 type="submit"
-                disabled={sending}
+                disabled={
+                  sending ||
+                  hasStockIssue
+                }
                 className="flex w-full items-center justify-center gap-2 bg-[#6B1E1E] px-6 py-4 font-semibold text-white transition hover:bg-[#8B2E2E] disabled:cursor-not-allowed disabled:opacity-60"
               >
 
@@ -777,6 +1064,8 @@ Thank you.`;
 
                 {sending
                   ? "Saving Order..."
+                  : hasStockIssue
+                  ? "Update Stock First"
                   : "Send Order on WhatsApp"}
 
               </button>

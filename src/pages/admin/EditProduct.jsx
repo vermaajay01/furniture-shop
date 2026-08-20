@@ -35,14 +35,22 @@ function EditProduct() {
     material: "",
     image: "",
     description: "",
+    stockQuantity: 0,
     featured: false,
     available: true,
   });
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [loading, setLoading] =
+    useState(true);
+
+  const [saving, setSaving] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const [success, setSuccess] =
+    useState("");
 
   // ======================================================
   // LOAD PRODUCT
@@ -67,6 +75,7 @@ function EditProduct() {
           setError(
             "Product not found."
           );
+
           setLoading(false);
           return;
         }
@@ -87,8 +96,16 @@ function EditProduct() {
             product.image || "",
           description:
             product.description || "",
+
+          // Existing products without
+          // stockQuantity are treated as 0.
+          stockQuantity:
+            product.stockQuantity ??
+            0,
+
           featured:
             product.featured === true,
+
           available:
             product.available === false
               ? false
@@ -171,6 +188,15 @@ function EditProduct() {
       return;
     }
 
+    const stockQuantity = Math.max(
+      0,
+      Math.floor(
+        Number(
+          formData.stockQuantity || 0
+        )
+      )
+    );
+
     try {
       setSaving(true);
 
@@ -181,14 +207,14 @@ function EditProduct() {
       );
 
       await updateDoc(productRef, {
-        name: formData.name.trim(),
+        name:
+          formData.name.trim(),
 
         category:
           formData.category,
 
-        price: Number(
-          formData.price
-        ),
+        price:
+          Number(formData.price),
 
         material:
           formData.material.trim(),
@@ -199,11 +225,16 @@ function EditProduct() {
         description:
           formData.description.trim(),
 
+        stockQuantity,
+
+        // Stock quantity controls
+        // actual stock availability.
+        available:
+          stockQuantity > 0 &&
+          formData.available,
+
         featured:
           formData.featured,
-
-        available:
-          formData.available,
 
         updatedAt:
           serverTimestamp(),
@@ -258,7 +289,9 @@ function EditProduct() {
   // PRODUCT NOT FOUND
   // ======================================================
 
-  if (error === "Product not found.") {
+  if (
+    error === "Product not found."
+  ) {
     return (
       <div className="min-h-screen bg-[#F8F1E7]">
 
@@ -342,8 +375,6 @@ function EditProduct() {
 
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4 md:px-6">
 
-          {/* LEFT */}
-
           <div className="flex items-center gap-4">
 
             <Link
@@ -372,8 +403,6 @@ function EditProduct() {
 
           </div>
 
-          {/* RIGHT */}
-
           <Link
             to="/"
             className="hidden items-center gap-2 rounded-md border border-[#6B1E1E]/20 px-4 py-2.5 text-sm font-medium text-[#6B1E1E] transition hover:bg-[#6B1E1E]/10 sm:flex"
@@ -391,10 +420,6 @@ function EditProduct() {
       ================================================== */}
 
       <main className="mx-auto max-w-6xl px-5 py-8 md:px-6 md:py-10">
-
-        {/* ==================================================
-            PAGE INTRO
-        ================================================== */}
 
         <div className="mb-8">
 
@@ -473,8 +498,6 @@ function EditProduct() {
           className="overflow-hidden bg-white shadow-sm"
         >
 
-          {/* FORM HEADER */}
-
           <div className="border-b border-[#6B1E1E]/10 bg-[#F8F1E7] px-6 py-6 md:px-10">
 
             <div className="flex items-center gap-4">
@@ -500,13 +523,11 @@ function EditProduct() {
 
           </div>
 
-          {/* FORM BODY */}
-
           <div className="px-6 py-8 md:px-10">
 
             <div className="grid gap-7 md:grid-cols-2">
 
-              {/* PRODUCT NAME */}
+              {/* NAME */}
 
               <div className="md:col-span-2">
 
@@ -539,7 +560,6 @@ function EditProduct() {
                   onChange={handleChange}
                   className="w-full border border-gray-200 bg-white px-4 py-3.5 text-sm outline-none transition focus:border-[#8B2E2E] focus:ring-1 focus:ring-[#8B2E2E]"
                 >
-
                   <option value="Sofas">
                     Sofas
                   </option>
@@ -579,7 +599,6 @@ function EditProduct() {
                   <option value="Other">
                     Other
                   </option>
-
                 </select>
 
               </div>
@@ -628,6 +647,34 @@ function EditProduct() {
                   placeholder="Sheesham Wood"
                   className="w-full border border-gray-200 px-4 py-3.5 text-sm outline-none transition focus:border-[#8B2E2E] focus:ring-1 focus:ring-[#8B2E2E]"
                 />
+
+              </div>
+
+              {/* STOCK QUANTITY */}
+
+              <div>
+
+                <label className="mb-2 block text-sm font-semibold text-[#2B1714]">
+                  Stock Quantity *
+                </label>
+
+                <input
+                  type="number"
+                  name="stockQuantity"
+                  min="0"
+                  step="1"
+                  value={
+                    formData.stockQuantity
+                  }
+                  onChange={handleChange}
+                  placeholder="10"
+                  className="w-full border border-gray-200 px-4 py-3.5 text-sm outline-none transition focus:border-[#8B2E2E] focus:ring-1 focus:ring-[#8B2E2E]"
+                />
+
+                <p className="mt-2 text-xs text-gray-400">
+                  Set to 0 when the product
+                  is out of stock.
+                </p>
 
               </div>
 
@@ -823,12 +870,12 @@ function EditProduct() {
                   <div>
 
                     <p className="font-semibold text-[#6B1E1E]">
-                      Available
+                      Show Product
                     </p>
 
                     <p className="mt-1 text-xs leading-5 text-gray-500">
-                      Show this product as
-                      available to customers.
+                      Allow this product to
+                      appear on the website.
                     </p>
 
                   </div>
@@ -869,6 +916,49 @@ function EditProduct() {
                   </div>
 
                 </label>
+
+              </div>
+
+              {/* ==================================================
+                  STOCK STATUS PREVIEW
+              ================================================== */}
+
+              <div className="mt-5 border border-gray-200 bg-[#F8F1E7] p-5">
+
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  Customer Stock Preview
+                </p>
+
+                {Number(
+                  formData.stockQuantity || 0
+                ) <= 0 ? (
+                  <p className="mt-2 font-semibold text-red-600">
+                    ✕ Out of Stock
+                  </p>
+                ) : Number(
+                    formData.stockQuantity
+                  ) <= 2 ? (
+                  <p className="mt-2 font-semibold text-orange-600">
+                    ⚠ Only{" "}
+                    {Number(
+                      formData.stockQuantity
+                    )}{" "}
+                    {Number(
+                      formData.stockQuantity
+                    ) === 1
+                      ? "item"
+                      : "items"}{" "}
+                    left
+                  </p>
+                ) : (
+                  <p className="mt-2 font-semibold text-green-700">
+                    ✓{" "}
+                    {Number(
+                      formData.stockQuantity
+                    )}{" "}
+                    items in stock
+                  </p>
+                )}
 
               </div>
 
