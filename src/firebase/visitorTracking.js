@@ -14,19 +14,84 @@ import { db } from "./firebase";
 // STORAGE KEYS
 // ======================================================
 
-const VISITOR_ID_KEY = "hari_om_visitor_id";
+const VISITOR_ID_KEY =
+  "hari_om_visitor_id";
+
+// ======================================================
+// DEVICE DETECTION
+// ======================================================
+
+function getDeviceType() {
+  const width = window.innerWidth;
+
+  if (width <= 767) {
+    return "Mobile";
+  }
+
+  if (width <= 1024) {
+    return "Tablet";
+  }
+
+  return "Desktop";
+}
+
+// ======================================================
+// BROWSER DETECTION
+// ======================================================
+
+function getBrowser() {
+  const userAgent =
+    navigator.userAgent;
+
+  if (
+    userAgent.includes("Edg/")
+  ) {
+    return "Microsoft Edge";
+  }
+
+  if (
+    userAgent.includes("OPR/") ||
+    userAgent.includes("Opera")
+  ) {
+    return "Opera";
+  }
+
+  if (
+    userAgent.includes("Chrome") &&
+    !userAgent.includes("Edg/")
+  ) {
+    return "Google Chrome";
+  }
+
+  if (
+    userAgent.includes("Firefox")
+  ) {
+    return "Mozilla Firefox";
+  }
+
+  if (
+    userAgent.includes("Safari") &&
+    !userAgent.includes("Chrome")
+  ) {
+    return "Safari";
+  }
+
+  return "Other";
+}
 
 // ======================================================
 // GET VISITOR ID
 // ======================================================
 
 function getVisitorId() {
-  let visitorId = localStorage.getItem(
-    VISITOR_ID_KEY
-  );
+  let visitorId =
+    localStorage.getItem(
+      VISITOR_ID_KEY
+    );
 
   if (!visitorId) {
-    visitorId = crypto.randomUUID();
+    visitorId =
+      crypto.randomUUID();
 
     localStorage.setItem(
       VISITOR_ID_KEY,
@@ -44,7 +109,8 @@ function getVisitorId() {
 function getToday() {
   const now = new Date();
 
-  const year = now.getFullYear();
+  const year =
+    now.getFullYear();
 
   const month = String(
     now.getMonth() + 1
@@ -69,6 +135,12 @@ export async function trackVisitor() {
     const today =
       getToday();
 
+    const deviceType =
+      getDeviceType();
+
+    const browser =
+      getBrowser();
+
     const visitorsRef =
       collection(
         db,
@@ -76,7 +148,7 @@ export async function trackVisitor() {
       );
 
     // ====================================================
-    // FIND EXISTING VISITOR
+    // FIND EXISTING UNIQUE VISITOR
     // ====================================================
 
     const visitorQuery =
@@ -99,16 +171,18 @@ export async function trackVisitor() {
     // ====================================================
 
     if (!snapshot.empty) {
-      // Use the first existing record.
-      // This also keeps compatibility with
-      // your old visitor documents.
-
       const existingVisitor =
         snapshot.docs[0];
 
       await updateDoc(
         existingVisitor.ref,
         {
+          deviceType:
+            deviceType,
+
+          browser:
+            browser,
+
           lastVisitDate:
             today,
 
@@ -129,6 +203,12 @@ export async function trackVisitor() {
       {
         visitorId:
           visitorId,
+
+        deviceType:
+          deviceType,
+
+        browser:
+          browser,
 
         firstVisitDate:
           today,
