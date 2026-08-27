@@ -4,6 +4,7 @@ import {
   query,
   where,
   getDocs,
+  updateDoc,
   serverTimestamp,
 } from "firebase/firestore";
 
@@ -14,7 +15,6 @@ import { db } from "./firebase";
 // ======================================================
 
 const VISITOR_ID_KEY = "hari_om_visitor_id";
-const VISITOR_DATE_KEY = "hari_om_visitor_date";
 
 // ======================================================
 // GET VISITOR ID
@@ -63,55 +63,85 @@ function getToday() {
 
 export async function trackVisitor() {
   try {
-    const visitorId = getVisitorId();
-    const today = getToday();
+    const visitorId =
+      getVisitorId();
 
-    // Check local browser record first
-    const lastVisit = localStorage.getItem(
-      VISITOR_DATE_KEY
-    );
+    const today =
+      getToday();
 
-    // Already counted today
-    if (lastVisit === today) {
+    const visitorsRef =
+      collection(
+        db,
+        "visitors"
+      );
+
+    // ====================================================
+    // FIND EXISTING VISITOR
+    // ====================================================
+
+    const visitorQuery =
+      query(
+        visitorsRef,
+        where(
+          "visitorId",
+          "==",
+          visitorId
+        )
+      );
+
+    const snapshot =
+      await getDocs(
+        visitorQuery
+      );
+
+    // ====================================================
+    // EXISTING VISITOR
+    // ====================================================
+
+    if (!snapshot.empty) {
+      // Use the first existing record.
+      // This also keeps compatibility with
+      // your old visitor documents.
+
+      const existingVisitor =
+        snapshot.docs[0];
+
+      await updateDoc(
+        existingVisitor.ref,
+        {
+          lastVisitDate:
+            today,
+
+          lastVisitAt:
+            serverTimestamp(),
+        }
+      );
+
       return;
     }
 
-    const visitorsRef = collection(
-      db,
-      "visitors"
-    );
+    // ====================================================
+    // NEW UNIQUE VISITOR
+    // ====================================================
 
-    // Check Firestore as well
-    const visitorQuery = query(
+    await addDoc(
       visitorsRef,
-      where(
-        "visitorId",
-        "==",
-        visitorId
-      ),
-      where(
-        "date",
-        "==",
-        today
-      )
-    );
+      {
+        visitorId:
+          visitorId,
 
-    const snapshot =
-      await getDocs(visitorQuery);
+        firstVisitDate:
+          today,
 
-    // Create visitor record
-    if (snapshot.empty) {
-      await addDoc(visitorsRef, {
-        visitorId: visitorId,
-        date: today,
-        createdAt: serverTimestamp(),
-      });
-    }
+        lastVisitDate:
+          today,
 
-    // Remember today's visit
-    localStorage.setItem(
-      VISITOR_DATE_KEY,
-      today
+        createdAt:
+          serverTimestamp(),
+
+        lastVisitAt:
+          serverTimestamp(),
+      }
     );
 
   } catch (error) {

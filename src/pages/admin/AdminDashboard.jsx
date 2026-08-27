@@ -256,20 +256,103 @@ function AdminDashboard() {
         const today = getToday();
         const currentMonth = getCurrentMonth();
 
-        const todayCount = visitors.filter(
-          (visitor) =>
-            visitor.date === today
-        ).length;
+        // ==================================================
+        // UNIQUE VISITORS
+        // ==================================================
 
-        const monthCount = visitors.filter(
-          (visitor) =>
-            visitor.date?.startsWith(
-              currentMonth
-            )
-        ).length;
+        const uniqueVisitors = new Map();
+
+        visitors.forEach((visitor) => {
+          const visitorId =
+            visitor.visitorId;
+
+          if (!visitorId) {
+            return;
+          }
+
+          const existing =
+            uniqueVisitors.get(
+              visitorId
+            );
+
+          if (!existing) {
+            uniqueVisitors.set(
+              visitorId,
+              visitor
+            );
+            return;
+          }
+
+          const existingDate =
+            existing.lastVisitDate ||
+            existing.date ||
+            "";
+
+          const currentDate =
+            visitor.lastVisitDate ||
+            visitor.date ||
+            "";
+
+          if (
+            currentDate >
+            existingDate
+          ) {
+            uniqueVisitors.set(
+              visitorId,
+              visitor
+            );
+          }
+        });
+
+        const uniqueVisitorList =
+          Array.from(
+            uniqueVisitors.values()
+          );
+
+        // ==================================================
+        // TODAY
+        // ==================================================
+
+        const todayCount =
+          uniqueVisitorList.filter(
+            (visitor) => {
+              const lastVisit =
+                visitor.lastVisitDate ||
+                visitor.date ||
+                "";
+
+              return (
+                lastVisit === today
+              );
+            }
+          ).length;
+
+        // ==================================================
+        // THIS MONTH
+        // ==================================================
+
+        const monthCount =
+          uniqueVisitorList.filter(
+            (visitor) => {
+              const lastVisit =
+                visitor.lastVisitDate ||
+                visitor.date ||
+                "";
+
+              return (
+                lastVisit.startsWith(
+                  currentMonth
+                )
+              );
+            }
+          ).length;
+
+        // ==================================================
+        // UPDATE DASHBOARD
+        // ==================================================
 
         setVisitorCount(
-          visitors.length
+          uniqueVisitorList.length
         );
 
         setTodayVisitors(
@@ -288,7 +371,8 @@ function AdminDashboard() {
       }
     );
 
-    return () => unsubscribe();
+    return () =>
+      unsubscribe();
   }, []);
 
   // ======================================================
