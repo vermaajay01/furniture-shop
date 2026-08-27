@@ -16,6 +16,10 @@ import {
   MapPin,
   MessageCircle,
   Clock,
+  ChevronLeft,
+  ChevronRight,
+  Tag,
+  X,
 } from "lucide-react";
 
 import {
@@ -41,23 +45,86 @@ function Home() {
   const [showScrollTop, setShowScrollTop] =
     useState(false);
 
-  const [settings, setSettings] = useState({
-    shopName: "हरि ॐ Furniture House",
+  // ======================================================
+  // DYNAMIC HERO BACKGROUND
+  // ======================================================
 
-    address:
-      "Your Furniture Shop Address, Your City, India",
+  const heroImages = [
+    {
+      src:
+        "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=2200&q=85",
+      alt:
+        "Elegant modern living room furniture",
+      position: "center",
+    },
+    {
+      src:
+        "https://heyagoto.com/wp-content/uploads/2019/02/72dde9a7009864439f9ac06917b1acd3-768x475.jpg",
+      alt:
+        "Modern wooden furniture showroom",
+      position: "center",
+    },
+    {
+      src:
+        "https://r100tokyo.com/cms_ver2/wp-content/uploads/2021/09/ph_article_7405.jpg",
+      alt:
+        "Warm wooden dining and living furniture",
+      position: "center",
+    },
+    {
+      src:
+        "https://muto-web.com/wp-content/uploads/2023/05/1BF295A8-E4B1-4AC5-86C8-9D9D521AB8B22.jpeg",
+      alt:
+        "Contemporary wooden furniture showroom",
+      position: "center",
+    },
+  ];
 
-    phone: "+91 XXXXX XXXXX",
+  const [heroIndex, setHeroIndex] =
+    useState(0);
 
-    whatsapp: "919596492640",
+  const [heroLoaded, setHeroLoaded] =
+    useState(true);
 
-    email: "info@hariomfurniture.com",
+  // ======================================================
+  // DYNAMIC OFFERS
+  // ======================================================
 
-    mapsUrl: "",
+  const [offers, setOffers] =
+    useState([]);
 
-    openingHours:
-      "Mon - Sun: 10:00 AM - 8:00 PM",
-  });
+  const [offerIndex, setOfferIndex] =
+    useState(0);
+
+  const [offersLoading, setOffersLoading] =
+    useState(true);
+
+  // ======================================================
+  // WEBSITE SETTINGS
+  // ======================================================
+
+  const [settings, setSettings] =
+    useState({
+      shopName:
+        "हरि ॐ Furniture House",
+
+      address:
+        "Your Furniture Shop Address, Your City, India",
+
+      phone:
+        "+91 XXXXX XXXXX",
+
+      whatsapp:
+        "919596492640",
+
+      email:
+        "info@hariomfurniture.com",
+
+      mapsUrl: "",
+
+      openingHours:
+        "Mon - Sun: 10:00 AM - 8:00 PM",
+    });
 
   // ======================================================
   // VISITOR TRACKING
@@ -65,6 +132,49 @@ function Home() {
 
   useEffect(() => {
     trackVisitor();
+  }, []);
+
+  // ======================================================
+  // ROTATE HERO IMAGES
+  // ======================================================
+
+  useEffect(() => {
+    const preloadImages =
+      heroImages.map(({ src }) => {
+        const image =
+          new Image();
+
+        image.src = src;
+
+        return image;
+      });
+
+    const interval =
+      window.setInterval(() => {
+        setHeroLoaded(false);
+
+        window.setTimeout(() => {
+          setHeroIndex(
+            (previous) =>
+              (previous + 1) %
+              heroImages.length
+          );
+
+          setHeroLoaded(true);
+        }, 180);
+      }, 5500);
+
+    return () => {
+      window.clearInterval(
+        interval
+      );
+
+      preloadImages.forEach(
+        (image) => {
+          image.src = "";
+        }
+      );
+    };
   }, []);
 
   // ======================================================
@@ -140,6 +250,166 @@ function Home() {
   }, []);
 
   // ======================================================
+  // LOAD ACTIVE OFFERS
+  // ======================================================
+
+  useEffect(() => {
+    const loadOffers =
+      async () => {
+        try {
+          setOffersLoading(true);
+
+          const snapshot =
+            await getDocs(
+              collection(
+                db,
+                "offers"
+              )
+            );
+
+          const today =
+            new Date()
+              .toISOString()
+              .split("T")[0];
+
+          const activeOffers =
+            snapshot.docs
+              .map((item) => ({
+                id: item.id,
+                ...item.data(),
+              }))
+              .filter((offer) => {
+                const discount =
+                  Number(
+                    offer.discountPercent ||
+                      0
+                  );
+
+                const isActive =
+                  offer.active === true;
+
+                const validDiscount =
+                  discount > 0;
+
+                const validStart =
+                  !offer.startDate ||
+                  today >=
+                    offer.startDate;
+
+                const validEnd =
+                  !offer.endDate ||
+                  today <=
+                    offer.endDate;
+
+                return (
+                  isActive &&
+                  validDiscount &&
+                  validStart &&
+                  validEnd
+                );
+              })
+              .sort((a, b) => {
+                const dateA =
+                  a.endDate || "";
+
+                const dateB =
+                  b.endDate || "";
+
+                return dateA.localeCompare(
+                  dateB
+                );
+              });
+
+          setOffers(
+            activeOffers
+          );
+
+          setOfferIndex(0);
+        } catch (error) {
+          console.error(
+            "Unable to load offers:",
+            error
+          );
+
+          setOffers([]);
+        } finally {
+          setOffersLoading(false);
+        }
+      };
+
+    loadOffers();
+  }, []);
+
+  // ======================================================
+  // AUTOMATIC OFFER ROTATION
+  // ======================================================
+
+  useEffect(() => {
+    if (offers.length <= 1) {
+      return;
+    }
+
+    const interval =
+      window.setInterval(() => {
+        setOfferIndex(
+          (previous) =>
+            (previous + 1) %
+            offers.length
+        );
+      }, 5000);
+
+    return () => {
+      window.clearInterval(
+        interval
+      );
+    };
+  }, [offers.length]);
+
+  // ======================================================
+  // OFFER NAVIGATION
+  // ======================================================
+
+  const nextOffer = () => {
+    if (!offers.length) {
+      return;
+    }
+
+    setOfferIndex(
+      (previous) =>
+        (previous + 1) %
+        offers.length
+    );
+  };
+
+  const previousOffer = () => {
+    if (!offers.length) {
+      return;
+    }
+
+    setOfferIndex(
+      (previous) =>
+        (previous - 1 +
+          offers.length) %
+        offers.length
+    );
+  };
+
+  // ======================================================
+  // CURRENT OFFER
+  // ======================================================
+
+  const currentOffer =
+    offers.length > 0
+      ? offers[offerIndex]
+      : null;
+
+  const currentDiscount =
+    Number(
+      currentOffer?.discountPercent ||
+        0
+    );
+
+  // ======================================================
   // LOAD FEATURED PRODUCTS
   // ======================================================
 
@@ -147,7 +417,9 @@ function Home() {
     const loadFeaturedProducts =
       async () => {
         try {
-          setLoadingProducts(true);
+          setLoadingProducts(
+            true
+          );
 
           const snapshot =
             await getDocs(
@@ -186,7 +458,9 @@ function Home() {
             error
           );
         } finally {
-          setLoadingProducts(false);
+          setLoadingProducts(
+            false
+          );
         }
       };
 
@@ -253,20 +527,180 @@ function Home() {
     <div className="min-h-screen bg-[#F8F1E7] text-[#2B1714]">
 
       {/* ==================================================
+          FLOATING DYNAMIC OFFER BANNER
+      ================================================== */}
+
+      {!offersLoading &&
+        currentOffer && (
+          <section className="relative z-30 px-3 py-2 sm:px-5 sm:py-3">
+
+            <div className="relative mx-auto max-w-7xl overflow-hidden rounded-xl border border-[#E0B66B]/40 bg-[#3A0D0D] shadow-[0_8px_30px_rgba(58,13,13,0.25)]">
+
+              {/* SUBTLE GLOW */}
+
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#8B2E2E]/20 via-[#E0B66B]/10 to-[#8B2E2E]/20" />
+
+              <div className="relative flex min-h-[64px] items-center justify-center gap-2 px-10 py-3 sm:min-h-[72px] sm:px-16">
+
+                {/* PREVIOUS */}
+
+                {offers.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={
+                      previousOffer
+                    }
+                    aria-label="Previous offer"
+                    className="absolute left-2 flex h-10 w-10 items-center justify-center rounded-full text-white/80 transition hover:bg-white/10 hover:text-white sm:left-4"
+                  >
+                    <ChevronLeft
+                      size={21}
+                    />
+                  </button>
+                )}
+
+                {/* OFFER CONTENT */}
+
+                <Link
+                  to="/shop"
+                  className="flex min-w-0 flex-1 items-center justify-center gap-3 text-center"
+                >
+
+                  <span className="hidden shrink-0 sm:flex h-9 w-9 items-center justify-center rounded-full bg-[#E0B66B]/15 text-[#E0B66B]">
+                    <Tag size={17} />
+                  </span>
+
+                  <div className="min-w-0">
+
+                    <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+
+                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#E0B66B] sm:text-xs">
+                        Limited Time Offer
+                      </span>
+
+                      <span className="hidden text-white/30 sm:inline">
+                        •
+                      </span>
+
+                      <span className="text-sm font-bold text-white sm:text-base">
+                        {currentDiscount}% OFF
+                      </span>
+
+                    </div>
+
+                    <p className="mt-0.5 truncate text-xs text-white/75 sm:text-sm">
+                      {currentOffer.title ||
+                        currentOffer.name ||
+                        "Special Offer on Selected Furniture"}
+                    </p>
+
+                  </div>
+
+                  <ArrowRight
+                    size={17}
+                    className="hidden shrink-0 text-[#E0B66B] sm:block"
+                  />
+
+                </Link>
+
+                {/* NEXT */}
+
+                {offers.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={
+                      nextOffer
+                    }
+                    aria-label="Next offer"
+                    className="absolute right-2 flex h-10 w-10 items-center justify-center rounded-full text-white/80 transition hover:bg-white/10 hover:text-white sm:right-4"
+                  >
+                    <ChevronRight
+                      size={21}
+                    />
+                  </button>
+                )}
+
+              </div>
+
+              {/* PROGRESS DOTS */}
+
+              {offers.length > 1 && (
+                <div className="absolute bottom-1 left-1/2 flex -translate-x-1/2 items-center gap-1.5">
+                  {offers.map(
+                    (_, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() =>
+                          setOfferIndex(
+                            index
+                          )
+                        }
+                        aria-label={`Show offer ${
+                          index + 1
+                        }`}
+                        className={`h-1 rounded-full transition-all duration-300 ${
+                          index ===
+                          offerIndex
+                            ? "w-5 bg-[#E0B66B]"
+                            : "w-1 bg-white/40"
+                        }`}
+                      />
+                    )
+                  )}
+                </div>
+              )}
+
+            </div>
+
+          </section>
+        )}
+
+      {/* ==================================================
           HERO
       ================================================== */}
 
-      <section className="relative flex min-h-screen items-center overflow-hidden">
+      <section className="relative flex min-h-[calc(100vh-80px)] items-center overflow-hidden sm:min-h-screen">
 
-        <img
-          src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=2000&q=85"
-          alt="Luxury furniture"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
+        {/* DYNAMIC BACKGROUND */}
 
-        <div className="absolute inset-0 bg-black/50" />
+        {heroImages.map(
+          (image, index) => (
+            <img
+              key={image.src}
+              src={image.src}
+              alt={image.alt}
+              loading={
+                index === 0
+                  ? "eager"
+                  : "lazy"
+              }
+              className={`absolute inset-0 h-full w-full object-cover transition-all duration-1000 ease-in-out ${
+                index === heroIndex
+                  ? heroLoaded
+                    ? "scale-100 opacity-100"
+                    : "scale-[1.02] opacity-0"
+                  : "scale-105 opacity-0"
+              }`}
+              style={{
+                objectPosition:
+                  image.position,
+              }}
+            />
+          )
+        )}
 
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 py-32">
+        {/* DARK OVERLAY */}
+
+        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/45 to-black/65" />
+
+        {/* WARM BRAND TINT */}
+
+        <div className="absolute inset-0 bg-[#3A0D0D]/10" />
+
+        {/* HERO CONTENT */}
+
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-5 py-28 sm:px-6 sm:py-32">
 
           <div className="max-w-3xl text-white">
 
@@ -274,7 +708,7 @@ function Home() {
               Crafted with care
             </p>
 
-            <h1 className="text-5xl font-bold leading-tight md:text-7xl">
+            <h1 className="text-4xl font-bold leading-[1.08] sm:text-5xl md:text-7xl">
 
               Furniture that makes
 
@@ -284,17 +718,17 @@ function Home() {
 
             </h1>
 
-            <p className="mt-6 max-w-xl text-lg leading-8 text-white/80">
+            <p className="mt-5 max-w-xl text-base leading-7 text-white/85 sm:mt-6 sm:text-lg sm:leading-8">
               Discover beautifully crafted
               furniture designed for comfort,
               durability and timeless style.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-4">
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
 
               <Link
                 to="/shop"
-                className="flex items-center gap-2 bg-[#8B2E2E] px-7 py-4 font-semibold transition hover:bg-[#6B1E1E]"
+                className="flex w-full items-center justify-center gap-2 bg-[#8B2E2E] px-6 py-3.5 font-semibold transition hover:bg-[#6B1E1E] sm:w-auto sm:px-7 sm:py-4"
               >
                 Explore Collection
 
@@ -303,7 +737,7 @@ function Home() {
 
               <Link
                 to="/custom-furniture"
-                className="border border-white/70 px-7 py-4 font-semibold backdrop-blur-sm transition hover:bg-white hover:text-black"
+                className="flex w-full items-center justify-center border border-white/70 px-6 py-3.5 text-center font-semibold backdrop-blur-sm transition hover:bg-white hover:text-black sm:w-auto sm:px-7 sm:py-4"
               >
                 Custom Furniture
               </Link>
@@ -311,6 +745,47 @@ function Home() {
             </div>
 
           </div>
+
+        </div>
+
+        {/* HERO IMAGE DOTS */}
+
+        <div className="absolute bottom-7 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2">
+
+          {heroImages.map(
+            (_, index) => (
+              <button
+                key={index}
+                type="button"
+                aria-label={`Show hero image ${
+                  index + 1
+                }`}
+                onClick={() => {
+                  setHeroLoaded(
+                    false
+                  );
+
+                  setHeroIndex(
+                    index
+                  );
+
+                  window.setTimeout(
+                    () => {
+                      setHeroLoaded(
+                        true
+                      );
+                    },
+                    180
+                  );
+                }}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  index === heroIndex
+                    ? "w-7 bg-[#E0B66B]"
+                    : "w-2 bg-white/60 hover:bg-white"
+                }`}
+              />
+            )
+          )}
 
         </div>
 
@@ -343,7 +818,6 @@ function Home() {
 
             {categories.map(
               (category) => {
-
                 const Icon =
                   category.icon;
 

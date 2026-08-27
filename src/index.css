@@ -1,26 +1,274 @@
 @import "tailwindcss";
 
 :root {
+
   font-family: Arial, Helvetica, sans-serif;
+
   color: #2B1714;
+
   background: #F8F1E7;
+
+  /* ======================================================
+     THEME VARIABLES
+  ====================================================== */
+
+  --theme-primary: #8B2E2E;
+
+  --theme-primary-dark: #6B1E1E;
+
+  --theme-background: #F8F1E7;
+
+  --theme-surface: #FFFFFF;
+
+  --theme-secondary-background: #EDE0D2;
+
+  --theme-text: #2B1714;
+
+  --theme-gold: #E0B66B;
+
+  --theme-light-accent: #F5E4E4;
+
 }
 
 html {
+
   scroll-behavior: smooth;
+
 }
 
 body {
+
   margin: 0;
+
   min-width: 320px;
-  background: #F8F1E7;
+
+  background: var(--theme-background);
+
+  color: var(--theme-text);
+
 }
 
 button,
+
 a {
+
   -webkit-tap-highlight-color: transparent;
+
 }
 
 button {
+
   cursor: pointer;
+
+}
+
+/* ======================================================
+   THEME BACKGROUND
+====================================================== */
+
+html,
+body {
+
+  background-color:
+    var(--theme-background);
+
+}
+
+/* ======================================================
+   EXISTING TAILWIND COLORS → THEME COLORS
+====================================================== */
+
+/* PRIMARY */
+
+[class~="bg-[#8B2E2E]"] {
+
+  background-color:
+    var(--theme-primary) !important;
+
+}
+
+[class~="text-[#8B2E2E]"] {
+
+  color:
+    var(--theme-primary) !important;
+
+}
+
+[class~="border-[#8B2E2E]"] {
+
+  border-color:
+    var(--theme-primary) !important;
+
+}
+
+/* DARK PRIMARY */
+
+[class~="bg-[#6B1E1E]"] {
+
+  background-color:
+    var(--theme-primary-dark) !important;
+
+}
+
+[class~="text-[#6B1E1E]"] {
+
+  color:
+    var(--theme-primary-dark) !important;
+
+}
+
+[class~="border-[#6B1E1E]"] {
+
+  border-color:
+    var(--theme-primary-dark) !important;
+
+}
+
+/* MAIN TEXT */
+
+[class~="text-[#2B1714]"] {
+
+  color:
+    var(--theme-text) !important;
+
+}
+
+/* MAIN BACKGROUND */
+
+[class~="bg-[#F8F1E7]"] {
+
+  background-color:
+    var(--theme-background) !important;
+
+}
+
+/* SECONDARY BACKGROUND */
+
+[class~="bg-[#EDE0D2]"] {
+
+  background-color:
+    var(--theme-secondary-background) !important;
+
+}
+
+/* LIGHT ACCENT */
+
+[class~="bg-[#F5E4E4]"] {
+
+  background-color:
+    var(--theme-light-accent) !important;
+
+}
+
+/* GOLD */
+
+[class~="text-[#E0B66B]"] {
+
+  color:
+    var(--theme-gold) !important;
+
+}
+
+[class~="bg-[#E0B66B]"] {
+
+  background-color:
+    var(--theme-gold) !important;
+
+}
+
+/* ======================================================
+   HOVER STATES
+====================================================== */
+
+[class~="hover:bg-[#8B2E2E]"]:hover {
+
+  background-color:
+    var(--theme-primary) !important;
+
+}
+
+[class~="hover:bg-[#6B1E1E]"]:hover {
+
+  background-color:
+    var(--theme-primary-dark) !important;
+
+}
+
+[class~="hover:text-[#8B2E2E]"]:hover {
+
+  color:
+    var(--theme-primary) !important;
+
+}
+
+[class~="hover:bg-[#6B1E1E]"]:hover {
+
+  background-color:
+    var(--theme-primary-dark) !important;
+
+}
+
+/* ======================================================
+   THEME-SPECIFIC TEXT / BUTTON SUPPORT
+====================================================== */
+
+.theme-primary {
+
+  color:
+    var(--theme-primary);
+
+}
+
+.theme-primary-bg {
+
+  background-color:
+    var(--theme-primary);
+
+}
+
+.theme-primary-dark-bg {
+
+  background-color:
+    var(--theme-primary-dark);
+
+}
+
+.theme-background {
+
+  background-color:
+    var(--theme-background);
+
+}
+
+.theme-surface {
+
+  background-color:
+    var(--theme-surface);
+
+}
+
+.theme-gold {
+
+  color:
+    var(--theme-gold);
+
+}
+
+/* ======================================================
+   SMOOTH THEME TRANSITION
+====================================================== */
+
+body,
+button,
+a,
+section,
+header,
+footer,
+div {
+
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease;
+
 }

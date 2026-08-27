@@ -6,6 +6,9 @@ import {
   onSnapshot,
   query,
   where,
+  doc,
+  getDoc,
+  setDoc,
 } from "firebase/firestore";
 
 import {
@@ -21,6 +24,8 @@ import {
   Settings,
   Globe,
   ShoppingBag,
+  Palette,
+  Check,
 } from "lucide-react";
 
 import { db } from "../../firebase/firebase";
@@ -42,6 +47,62 @@ function AdminDashboard() {
 
   const [recentNotifications, setRecentNotifications] =
     useState([]);
+
+  // ======================================================
+  // WEBSITE THEME
+  // ======================================================
+
+  const themes = [
+    {
+      id: "classic-maroon",
+      name: "Classic Maroon",
+      description: "Current Hari Om theme",
+      preview: "bg-[#6B1E1E]",
+      accent: "#8B2E2E",
+      gold: "#B8863B",
+    },
+    {
+      id: "forest-green",
+      name: "Forest Green",
+      description: "Natural and premium",
+      preview: "bg-[#315C46]",
+      accent: "#3E7658",
+      gold: "#C2A15A",
+    },
+    {
+      id: "royal-navy",
+      name: "Royal Navy",
+      description: "Elegant and sophisticated",
+      preview: "bg-[#243B5A]",
+      accent: "#31577F",
+      gold: "#C7A65A",
+    },
+    {
+      id: "walnut-brown",
+      name: "Walnut Brown",
+      description: "Warm wooden finish",
+      preview: "bg-[#5A3928]",
+      accent: "#765039",
+      gold: "#C19A63",
+    },
+    {
+      id: "modern-charcoal",
+      name: "Modern Charcoal",
+      description: "Clean contemporary look",
+      preview: "bg-[#30343B]",
+      accent: "#464D57",
+      gold: "#C5A66A",
+    },
+  ];
+
+  const [selectedTheme, setSelectedTheme] =
+    useState("classic-maroon");
+
+  const [themeSaving, setThemeSaving] =
+    useState(false);
+
+  const [themeMessage, setThemeMessage] =
+    useState("");
 
   // ======================================================
   // DATE HELPERS
@@ -73,6 +134,103 @@ function AdminDashboard() {
     ).padStart(2, "0");
 
     return `${year}-${month}`;
+  };
+
+  // ======================================================
+  // WEBSITE THEME
+  // ======================================================
+
+  useEffect(() => {
+    const settingsRef = doc(
+      db,
+      "settings",
+      "website"
+    );
+
+    const unsubscribe = onSnapshot(
+      settingsRef,
+      (snapshot) => {
+        if (!snapshot.exists()) {
+          return;
+        }
+
+        const data = snapshot.data();
+
+        setSelectedTheme(
+          data.themeId ||
+            "classic-maroon"
+        );
+      },
+      (error) => {
+        console.error(
+          "Theme settings error:",
+          error
+        );
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!themeMessage) {
+      return;
+    }
+
+    const timer =
+      window.setTimeout(() => {
+        setThemeMessage("");
+      }, 2500);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [themeMessage]);
+
+  const handleThemeChange = async (
+    themeId
+  ) => {
+    if (
+      themeId === selectedTheme ||
+      themeSaving
+    ) {
+      return;
+    }
+
+    try {
+      setThemeSaving(true);
+      setThemeMessage("");
+
+      await setDoc(
+        doc(
+          db,
+          "settings",
+          "website"
+        ),
+        {
+          themeId,
+        },
+        {
+          merge: true,
+        }
+      );
+
+      setSelectedTheme(themeId);
+      setThemeMessage(
+        "Theme saved successfully."
+      );
+    } catch (error) {
+      console.error(
+        "Unable to save website theme:",
+        error
+      );
+
+      setThemeMessage(
+        "Unable to save theme."
+      );
+    } finally {
+      setThemeSaving(false);
+    }
   };
 
   // ======================================================
@@ -609,7 +767,7 @@ function AdminDashboard() {
           Quick Actions
         </h2>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
 
           {/* PRODUCTS */}
 
@@ -748,6 +906,94 @@ function AdminDashboard() {
             />
 
           </Link>
+
+          {/* THEME MANAGER */}
+
+          <div className="bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+
+            <div className="flex items-center gap-4">
+
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#F5E4E4] text-[#8B2E2E]">
+                <Palette size={22} />
+              </div>
+
+              <div className="min-w-0">
+
+                <p className="font-semibold text-[#6B1E1E]">
+                  Website Theme
+                </p>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  Change customer theme
+                </p>
+
+              </div>
+
+            </div>
+
+            <div className="mt-5 space-y-2">
+
+              {themes.map((theme) => (
+                <button
+                  key={theme.id}
+                  type="button"
+                  onClick={() =>
+                    handleThemeChange(
+                      theme.id
+                    )
+                  }
+                  disabled={themeSaving}
+                  className={`flex w-full items-center gap-3 rounded-lg border p-2 text-left transition ${
+                    selectedTheme === theme.id
+                      ? "border-[#8B2E2E] bg-[#F8F1E7]"
+                      : "border-gray-100 hover:border-[#B8863B]/50 hover:bg-gray-50"
+                  }`}
+                >
+
+                  <span
+                    className={`h-7 w-7 shrink-0 rounded-full ${theme.preview}`}
+                  />
+
+                  <span className="min-w-0 flex-1">
+
+                    <span className="block truncate text-xs font-semibold text-[#2B1714]">
+                      {theme.name}
+                    </span>
+
+                    <span className="block truncate text-[10px] text-gray-400">
+                      {theme.description}
+                    </span>
+
+                  </span>
+
+                  {selectedTheme ===
+                    theme.id && (
+                    <Check
+                      size={17}
+                      className="shrink-0 text-[#8B2E2E]"
+                    />
+                  )}
+
+                </button>
+              ))}
+
+            </div>
+
+            {themeMessage && (
+              <p
+                className={`mt-3 text-xs font-medium ${
+                  themeMessage.includes(
+                    "successfully"
+                  )
+                    ? "text-green-700"
+                    : "text-red-600"
+                }`}
+              >
+                {themeMessage}
+              </p>
+            )}
+
+          </div>
 
           {/* VIEW STORE */}
 

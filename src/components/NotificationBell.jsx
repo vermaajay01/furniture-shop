@@ -12,10 +12,11 @@ import {
 import {
   Bell,
   MessageSquare,
+  ShoppingCart,
   X,
   CheckCheck,
-  Trash2,
   Eye,
+  ImageOff,
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
@@ -77,7 +78,9 @@ function NotificationBell() {
                 b.createdAt?.toMillis?.() ||
                 0;
 
-              return timeB - timeA;
+              return (
+                timeB - timeA
+              );
             }
           );
 
@@ -175,6 +178,19 @@ function NotificationBell() {
 
       setOpen(false);
 
+      // CUSTOMER ORDER
+      if (
+        notification.type ===
+        "order"
+      ) {
+        navigate(
+          "/admin/orders"
+        );
+
+        return;
+      }
+
+      // CUSTOM FURNITURE REQUEST
       if (
         notification.type ===
         "custom_request"
@@ -182,6 +198,8 @@ function NotificationBell() {
         navigate(
           "/admin/requests"
         );
+
+        return;
       }
     };
 
@@ -213,6 +231,39 @@ function NotificationBell() {
       return "Recently";
     }
   };
+
+  // ======================================================
+  // NOTIFICATION ICON
+  // ======================================================
+
+  const getNotificationIcon =
+    (notification) => {
+      if (
+        notification.type ===
+        "order"
+      ) {
+        return (
+          <ShoppingCart
+            size={18}
+          />
+        );
+      }
+
+      if (
+        notification.type ===
+        "custom_request"
+      ) {
+        return (
+          <MessageSquare
+            size={18}
+          />
+        );
+      }
+
+      return (
+        <Bell size={18} />
+      );
+    };
 
   // ======================================================
   // PAGE
@@ -283,9 +334,7 @@ function NotificationBell() {
 
           <div className="fixed right-4 top-20 z-50 w-[calc(100vw-2rem)] max-w-md overflow-hidden border border-[#6B1E1E]/15 bg-white shadow-2xl md:absolute md:right-0 md:top-14 md:w-96">
 
-            {/* ==================================================
-                HEADER
-            ================================================== */}
+            {/* HEADER */}
 
             <div className="flex items-center justify-between border-b border-[#6B1E1E]/10 bg-[#F8F1E7] px-5 py-4">
 
@@ -334,6 +383,7 @@ function NotificationBell() {
                     }
                     className="flex items-center gap-1 rounded px-2 py-1 text-xs font-semibold text-[#8B2E2E] transition hover:bg-[#F1E4D7] disabled:opacity-50"
                   >
+
                     <CheckCheck
                       size={14}
                     />
@@ -341,6 +391,7 @@ function NotificationBell() {
                     {processing
                       ? "Updating..."
                       : "Mark all"}
+
                   </button>
                 )}
 
@@ -359,11 +410,9 @@ function NotificationBell() {
 
             </div>
 
-            {/* ==================================================
-                NOTIFICATION LIST
-            ================================================== */}
+            {/* NOTIFICATION LIST */}
 
-            <div className="max-h-[430px] overflow-y-auto">
+            <div className="max-h-[500px] overflow-y-auto">
 
               {notifications.length ===
                 0 && (
@@ -382,103 +431,197 @@ function NotificationBell() {
                   </p>
 
                   <p className="mt-1 text-sm text-gray-400">
-                    New customer enquiries
-                    will appear here.
+                    New customer orders
+                    and enquiries will
+                    appear here.
                   </p>
 
                 </div>
               )}
 
               {notifications.map(
-                (notification) => (
-                  <button
-                    type="button"
-                    key={
-                      notification.id
-                    }
-                    onClick={() =>
-                      handleNotificationClick(
-                        notification
-                      )
-                    }
-                    className="group flex w-full gap-4 border-b border-gray-100 px-5 py-4 text-left transition hover:bg-[#F8F1E7]"
-                  >
+                (notification) => {
 
-                    {/* ICON */}
+                  const isOrder =
+                    notification.type ===
+                    "order";
 
-                    <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#F5E4E4] text-[#8B2E2E]">
+                  return (
+                    <button
+                      type="button"
+                      key={
+                        notification.id
+                      }
+                      onClick={() =>
+                        handleNotificationClick(
+                          notification
+                        )
+                      }
+                      className="group flex w-full gap-4 border-b border-gray-100 px-5 py-4 text-left transition hover:bg-[#F8F1E7]"
+                    >
 
-                      {notification.type ===
-                      "custom_request" ? (
-                        <MessageSquare
-                          size={18}
-                        />
+                      {/* ==================================================
+                          ORDER IMAGE / ICON
+                      ================================================== */}
+
+                      {isOrder &&
+                      notification.image ? (
+
+                        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-gray-100">
+
+                          <img
+                            src={
+                              notification.image
+                            }
+                            alt={
+                              notification.title ||
+                              "Product"
+                            }
+                            className="h-full w-full object-cover transition duration-300 group-hover:scale-110"
+                            onError={(
+                              e
+                            ) => {
+                              e.currentTarget.style.display =
+                                "none";
+                            }}
+                          />
+
+                        </div>
+
+                      ) : isOrder ? (
+
+                        <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[#F5E4E4] text-[#8B2E2E]">
+
+                          <ImageOff
+                            size={18}
+                          />
+
+                        </div>
+
                       ) : (
-                        <Bell
-                          size={18}
-                        />
+
+                        <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#F5E4E4] text-[#8B2E2E]">
+
+                          {getNotificationIcon(
+                            notification
+                          )}
+
+                        </div>
+
                       )}
 
-                      <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[#B8863B]" />
+                      {/* CONTENT */}
 
-                    </div>
+                      <div className="min-w-0 flex-1">
 
-                    {/* CONTENT */}
+                        <div className="flex items-start justify-between gap-3">
 
-                    <div className="min-w-0 flex-1">
+                          <div className="min-w-0">
 
-                      <div className="flex items-start justify-between gap-3">
+                            <p className="font-semibold text-[#2B1714]">
+                              {notification.title ||
+                                "New Notification"}
+                            </p>
 
-                        <p className="font-semibold text-[#2B1714]">
-                          {notification.title ||
-                            "New Notification"}
+                            {isOrder &&
+                              notification.customerName && (
+                                <p className="mt-0.5 text-xs font-medium text-[#8B2E2E]">
+                                  Customer:{" "}
+                                  {
+                                    notification.customerName
+                                  }
+                                </p>
+                              )}
+
+                          </div>
+
+                          <Eye
+                            size={15}
+                            className="mt-1 shrink-0 text-gray-300 transition group-hover:text-[#8B2E2E]"
+                          />
+
+                        </div>
+
+                        <p className="mt-1 line-clamp-2 text-sm leading-5 text-gray-500">
+                          {notification.message ||
+                            "You have a new notification."}
                         </p>
 
-                        <Eye
-                          size={15}
-                          className="mt-1 shrink-0 text-gray-300 transition group-hover:text-[#8B2E2E]"
-                        />
+                        {/* ORDER TOTAL */}
+
+                        {isOrder &&
+                          typeof notification.total !==
+                            "undefined" && (
+                            <p className="mt-1 text-sm font-bold text-[#6B1E1E]">
+                              ₹
+                              {Number(
+                                notification.total ||
+                                  0
+                              ).toLocaleString(
+                                "en-IN"
+                              )}
+
+                              {notification.itemCount
+                                ? ` • ${notification.itemCount} item${
+                                    notification.itemCount !==
+                                    1
+                                      ? "s"
+                                      : ""
+                                  }`
+                                : ""}
+                            </p>
+                          )}
+
+                        <p className="mt-2 text-xs text-gray-400">
+                          {formatTime(
+                            notification.createdAt
+                          )}
+                        </p>
 
                       </div>
 
-                      <p className="mt-1 line-clamp-2 text-sm leading-5 text-gray-500">
-                        {notification.message ||
-                          "You have a new notification."}
-                      </p>
-
-                      <p className="mt-2 text-xs text-gray-400">
-                        {formatTime(
-                          notification.createdAt
-                        )}
-                      </p>
-
-                    </div>
-
-                  </button>
-                )
+                    </button>
+                  );
+                }
               )}
 
             </div>
 
-            {/* ==================================================
-                FOOTER
-            ================================================== */}
+            {/* FOOTER */}
 
             <div className="border-t border-[#6B1E1E]/10 bg-[#F8F1E7] px-5 py-3">
 
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen(false);
+              <div className="flex gap-3">
 
-                  navigate(
-                    "/admin/requests"
-                  );
-                }}
-                className="flex w-full items-center justify-center gap-2 text-sm font-semibold text-[#8B2E2E] transition hover:text-[#6B1E1E]"
-              >
-                View All Requests
-              </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+
+                    navigate(
+                      "/admin/orders"
+                    );
+                  }}
+                  className="flex-1 text-sm font-semibold text-[#8B2E2E] transition hover:text-[#6B1E1E]"
+                >
+                  View Orders
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+
+                    navigate(
+                      "/admin/requests"
+                    );
+                  }}
+                  className="flex-1 border-l border-[#6B1E1E]/10 text-sm font-semibold text-[#8B2E2E] transition hover:text-[#6B1E1E]"
+                >
+                  View Requests
+                </button>
+
+              </div>
 
             </div>
 

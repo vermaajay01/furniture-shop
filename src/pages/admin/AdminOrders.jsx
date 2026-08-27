@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+
 import {
   collection,
   getDocs,
@@ -14,6 +16,8 @@ import {
   Phone,
   MapPin,
   ChevronDown,
+  ImageOff,
+  ExternalLink,
 } from "lucide-react";
 
 import { db } from "../../firebase/firebase";
@@ -21,6 +25,10 @@ import { db } from "../../firebase/firebase";
 function AdminOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // ======================================================
+  // LOAD ORDERS
+  // ======================================================
 
   const loadOrders = async () => {
     try {
@@ -54,6 +62,10 @@ function AdminOrders() {
   useEffect(() => {
     loadOrders();
   }, []);
+
+  // ======================================================
+  // UPDATE ORDER STATUS
+  // ======================================================
 
   const updateStatus = async (
     orderId,
@@ -89,6 +101,10 @@ function AdminOrders() {
     }
   };
 
+  // ======================================================
+  // FORMAT DATE
+  // ======================================================
+
   const formatDate = (timestamp) => {
     if (!timestamp) {
       return "Just now";
@@ -102,6 +118,10 @@ function AdminOrders() {
       return "Unknown date";
     }
   };
+
+  // ======================================================
+  // STATUS COLOR
+  // ======================================================
 
   const getStatusClass = (status) => {
     switch (status) {
@@ -122,31 +142,37 @@ function AdminOrders() {
     }
   };
 
+  // ======================================================
+  // LOADING
+  // ======================================================
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-
         <div className="flex items-center gap-3 text-[#8B2E2E]">
-
           <Loader2
             size={25}
             className="animate-spin"
           />
 
           Loading orders...
-
         </div>
-
       </div>
     );
   }
+
+  // ======================================================
+  // PAGE
+  // ======================================================
 
   return (
     <div className="min-h-screen bg-[#F8F1E7] p-6 md:p-10">
 
       <div className="mx-auto max-w-7xl">
 
-        {/* HEADER */}
+        {/* ==================================================
+            HEADER
+        ================================================== */}
 
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
 
@@ -175,6 +201,7 @@ function AdminOrders() {
             />
 
             <div>
+
               <p className="text-xs text-gray-400">
                 Total Orders
               </p>
@@ -182,13 +209,16 @@ function AdminOrders() {
               <p className="text-xl font-bold">
                 {orders.length}
               </p>
+
             </div>
 
           </div>
 
         </div>
 
-        {/* EMPTY */}
+        {/* ==================================================
+            EMPTY
+        ================================================== */}
 
         {!orders.length ? (
           <div className="mt-10 bg-white px-6 py-20 text-center shadow-sm">
@@ -209,6 +239,7 @@ function AdminOrders() {
 
           </div>
         ) : (
+
           <div className="mt-10 space-y-5">
 
             {orders.map((order) => (
@@ -218,7 +249,9 @@ function AdminOrders() {
                 className="overflow-hidden bg-white shadow-sm"
               >
 
-                {/* ORDER HEADER */}
+                {/* ==================================================
+                    ORDER HEADER
+                ================================================== */}
 
                 <div className="flex flex-col gap-4 border-b border-gray-100 p-5 md:flex-row md:items-center md:justify-between">
 
@@ -253,7 +286,8 @@ function AdminOrders() {
 
                       <select
                         value={
-                          order.status || "new"
+                          order.status ||
+                          "new"
                         }
                         onChange={(e) =>
                           updateStatus(
@@ -299,11 +333,15 @@ function AdminOrders() {
 
                 </div>
 
-                {/* ORDER CONTENT */}
+                {/* ==================================================
+                    ORDER CONTENT
+                ================================================== */}
 
                 <div className="grid gap-8 p-5 lg:grid-cols-[280px_1fr]">
 
-                  {/* CUSTOMER */}
+                  {/* ==================================================
+                      CUSTOMER
+                  ================================================== */}
 
                   <div>
 
@@ -346,7 +384,9 @@ function AdminOrders() {
 
                   </div>
 
-                  {/* ITEMS */}
+                  {/* ==================================================
+                      ITEMS
+                  ================================================== */}
 
                   <div>
 
@@ -356,7 +396,7 @@ function AdminOrders() {
 
                     <div className="mt-4 overflow-x-auto">
 
-                      <table className="w-full min-w-[600px] text-left text-sm">
+                      <table className="w-full min-w-[760px] text-left text-sm">
 
                         <thead>
 
@@ -386,6 +426,7 @@ function AdminOrders() {
 
                           {(order.items || []).map(
                             (item, index) => (
+
                               <tr
                                 key={
                                   item.productId ||
@@ -394,45 +435,152 @@ function AdminOrders() {
                                 className="border-b border-gray-50 last:border-0"
                               >
 
+                                {/* ==================================================
+                                    PRODUCT IMAGE + DETAILS
+                                ================================================== */}
+
                                 <td className="py-4">
 
-                                  <p className="font-medium">
-                                    {item.name}
-                                  </p>
+                                  <div className="flex items-center gap-4">
 
-                                  <p className="mt-1 text-xs text-gray-400">
-                                    {item.category}
-                                    {item.material
-                                      ? ` • ${item.material}`
-                                      : ""}
-                                  </p>
+                                    {/* PRODUCT IMAGE */}
+
+                                    {item.image ? (
+
+                                      <Link
+                                        to={`/product/${item.productId}`}
+                                        className="group relative block h-16 w-16 shrink-0 overflow-hidden bg-gray-100"
+                                        title="View product"
+                                      >
+
+                                        <img
+                                          src={
+                                            item.image
+                                          }
+                                          alt={
+                                            item.name ||
+                                            "Product"
+                                          }
+                                          className="h-full w-full object-cover transition duration-300 group-hover:scale-110"
+                                          onError={(
+                                            e
+                                          ) => {
+                                            e.currentTarget.style.display =
+                                              "none";
+                                          }}
+                                        />
+
+                                      </Link>
+
+                                    ) : (
+
+                                      <div className="flex h-16 w-16 shrink-0 items-center justify-center bg-gray-100 text-gray-300">
+
+                                        <ImageOff
+                                          size={22}
+                                        />
+
+                                      </div>
+
+                                    )}
+
+                                    {/* PRODUCT INFORMATION */}
+
+                                    <div className="min-w-0">
+
+                                      <Link
+                                        to={`/product/${item.productId}`}
+                                        className="font-medium text-[#2B1714] transition hover:text-[#8B2E2E]"
+                                      >
+                                        {item.name ||
+                                          "Unnamed Product"}
+                                      </Link>
+
+                                      <p className="mt-1 text-xs text-gray-400">
+                                        {item.category ||
+                                          "Furniture"}
+
+                                        {item.material
+                                          ? ` • ${item.material}`
+                                          : ""}
+                                      </p>
+
+                                      {/* VIEW PRODUCT */}
+
+                                      {item.productId && (
+                                        <Link
+                                          to={`/product/${item.productId}`}
+                                          className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-[#8B2E2E] hover:underline"
+                                        >
+                                          View Product
+                                          <ExternalLink
+                                            size={11}
+                                          />
+                                        </Link>
+                                      )}
+
+                                    </div>
+
+                                  </div>
 
                                 </td>
 
-                                <td className="py-4">
+                                {/* PRICE */}
+
+                                <td className="py-4 align-middle">
+
                                   ₹
                                   {Number(
-                                    item.price || 0
-                                  ).toLocaleString(
-                                    "en-IN"
-                                  )}
-                                </td>
-
-                                <td className="py-4">
-                                  {item.quantity}
-                                </td>
-
-                                <td className="py-4 text-right font-semibold">
-                                  ₹
-                                  {Number(
-                                    item.itemTotal ||
+                                    item.price ||
                                       0
                                   ).toLocaleString(
                                     "en-IN"
                                   )}
+
+                                  {Number(
+                                    item.discountPercent ||
+                                      0
+                                  ) > 0 && (
+                                    <p className="mt-1 text-[11px] font-medium text-green-600">
+                                      {
+                                        item.discountPercent
+                                      }
+                                      % OFF
+                                    </p>
+                                  )}
+
+                                </td>
+
+                                {/* QUANTITY */}
+
+                                <td className="py-4 align-middle">
+                                  {item.quantity ||
+                                    0}
+                                </td>
+
+                                {/* TOTAL */}
+
+                                <td className="py-4 text-right align-middle font-semibold">
+
+                                  ₹
+                                  {Number(
+                                    item.itemTotal ||
+                                      Number(
+                                        item.price ||
+                                          0
+                                      ) *
+                                        Number(
+                                          item.quantity ||
+                                            0
+                                        )
+                                  ).toLocaleString(
+                                    "en-IN"
+                                  )}
+
                                 </td>
 
                               </tr>
+
                             )
                           )}
 
@@ -451,6 +599,7 @@ function AdminOrders() {
             ))}
 
           </div>
+
         )}
 
       </div>

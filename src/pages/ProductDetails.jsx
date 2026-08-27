@@ -10,6 +10,8 @@ import {
   PackageCheck,
   AlertTriangle,
   XCircle,
+  Share2,
+  Check,
 } from "lucide-react";
 
 import {
@@ -47,6 +49,13 @@ function ProductDetails() {
     useState(false);
 
   // ======================================================
+  // SHARE
+  // ======================================================
+
+  const [shareMessage, setShareMessage] =
+    useState("");
+
+  // ======================================================
   // LOAD PRODUCT + SETTINGS + OFFER
   // ======================================================
 
@@ -75,6 +84,7 @@ function ProductDetails() {
           );
 
           setProduct(null);
+
           return;
         }
 
@@ -154,8 +164,10 @@ function ProductDetails() {
                 ) > 0 &&
                 item.startDate &&
                 item.endDate &&
-                today >= item.startDate &&
-                today <= item.endDate
+                today >=
+                  item.startDate &&
+                today <=
+                  item.endDate
               );
             });
 
@@ -186,7 +198,8 @@ function ProductDetails() {
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (
-        event.key === "Escape"
+        event.key ===
+        "Escape"
       ) {
         setImagePreview(false);
       }
@@ -212,6 +225,27 @@ function ProductDetails() {
         "";
     };
   }, [imagePreview]);
+
+  // ======================================================
+  // CLEAR SHARE MESSAGE
+  // ======================================================
+
+  useEffect(() => {
+    if (!shareMessage) {
+      return;
+    }
+
+    const timer =
+      window.setTimeout(() => {
+        setShareMessage("");
+      }, 2500);
+
+    return () => {
+      window.clearTimeout(
+        timer
+      );
+    };
+  }, [shareMessage]);
 
   // ======================================================
   // LOADING
@@ -259,8 +293,11 @@ function ProductDetails() {
             to="/shop"
             className="mt-6 inline-flex items-center gap-2 bg-[#8B2E2E] px-6 py-3 font-semibold text-white"
           >
+
             <ArrowLeft size={18} />
+
             Back to Shop
+
           </Link>
 
         </div>
@@ -324,6 +361,114 @@ function ProductDetails() {
     );
 
   // ======================================================
+  // PRODUCT URL
+  // ======================================================
+
+  const productURL =
+    `${window.location.origin}/product/${product.id}`;
+
+  // ======================================================
+  // SHARE PRODUCT
+  // ======================================================
+
+  const handleShare = async () => {
+    const shareText = hasOffer
+      ? `${product.name} - ₹${formattedDiscountedPrice} (${discountPercent}% OFF) at Hari Om Furniture House`
+      : `${product.name} - ₹${formattedOriginalPrice} at Hari Om Furniture House`;
+
+    try {
+      // ==================================================
+      // MOBILE / SUPPORTED BROWSERS
+      // ==================================================
+
+      if (
+        navigator.share
+      ) {
+        await navigator.share({
+          title:
+            product.name,
+
+          text:
+            `${shareText}\n\nView Product:`,
+
+          url:
+            productURL,
+        });
+
+        setShareMessage(
+          "Product shared successfully."
+        );
+
+        return;
+      }
+
+      // ==================================================
+      // DESKTOP / FALLBACK
+      // ==================================================
+
+      await navigator.clipboard.writeText(
+        `${shareText}\n${productURL}`
+      );
+
+      setShareMessage(
+        "Product link copied!"
+      );
+    } catch (shareError) {
+      // User cancelled native sharing.
+      if (
+        shareError?.name ===
+        "AbortError"
+      ) {
+        return;
+      }
+
+      // ==================================================
+      // FINAL FALLBACK
+      // ==================================================
+
+      try {
+        const temporaryInput =
+          document.createElement(
+            "textarea"
+          );
+
+        temporaryInput.value =
+          productURL;
+
+        temporaryInput.style.position =
+          "fixed";
+
+        temporaryInput.style.opacity =
+          "0";
+
+        document.body.appendChild(
+          temporaryInput
+        );
+
+        temporaryInput.focus();
+
+        temporaryInput.select();
+
+        document.execCommand(
+          "copy"
+        );
+
+        document.body.removeChild(
+          temporaryInput
+        );
+
+        setShareMessage(
+          "Product link copied!"
+        );
+      } catch {
+        setShareMessage(
+          "Unable to share. Please copy the product URL."
+        );
+      }
+    }
+  };
+
+  // ======================================================
   // WHATSAPP MESSAGE
   // ======================================================
 
@@ -365,6 +510,9 @@ I am interested in this product:
 🖼️ Product Image:
 ${product.image}
 
+🔗 View Product:
+${productURL}
+
 Please provide more details about this product.
 
 Thank you.
@@ -394,8 +542,11 @@ Thank you.
             to="/shop"
             className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-[#8B2E2E]"
           >
+
             <ArrowLeft size={18} />
+
             Back to Shop
+
           </Link>
 
           {/* ==================================================
@@ -431,8 +582,12 @@ Thank you.
             >
 
               <img
-                src={product.image}
-                alt={product.name}
+                src={
+                  product.image
+                }
+                alt={
+                  product.name
+                }
                 className={`h-full w-full object-cover transition duration-500 group-hover:scale-105 ${
                   isOutOfStock
                     ? "opacity-70"
@@ -446,7 +601,9 @@ Thank you.
 
               <div className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full bg-black/60 px-4 py-2 text-sm font-medium text-white opacity-0 backdrop-blur-sm transition duration-300 group-hover:opacity-100">
 
-                <ZoomIn size={17} />
+                <ZoomIn
+                  size={17}
+                />
 
                 Click to enlarge
 
@@ -458,7 +615,10 @@ Thank you.
 
               {hasOffer && (
                 <div className="absolute left-4 top-4 rounded-full bg-[#8B2E2E] px-4 py-2 text-sm font-bold text-white shadow-lg">
-                  {discountPercent}% OFF
+
+                  {discountPercent}%
+                  OFF
+
                 </div>
               )}
 
@@ -507,7 +667,10 @@ Thank you.
                     {/* ORIGINAL PRICE */}
 
                     <p className="text-lg text-gray-400 line-through">
-                      ₹{formattedOriginalPrice}
+                      ₹
+                      {
+                        formattedOriginalPrice
+                      }
                     </p>
 
                     {/* DISCOUNTED PRICE */}
@@ -515,18 +678,27 @@ Thank you.
                     <div className="mt-1 flex flex-wrap items-center gap-3">
 
                       <p className="text-3xl font-bold text-[#8B2E2E]">
-                        ₹{formattedDiscountedPrice}
+                        ₹
+                        {
+                          formattedDiscountedPrice
+                        }
                       </p>
 
                       <span className="rounded-full bg-[#8B2E2E] px-3 py-1 text-xs font-bold text-white">
-                        {discountPercent}% OFF
+                        {
+                          discountPercent
+                        }%
+                        OFF
                       </span>
 
                     </div>
                   </>
                 ) : (
                   <p className="text-3xl font-bold text-[#8B2E2E]">
-                    ₹{formattedOriginalPrice}
+                    ₹
+                    {
+                      formattedOriginalPrice
+                    }
                   </p>
                 )}
 
@@ -570,11 +742,15 @@ Thank you.
 
                       <p className="font-semibold">
                         Only{" "}
-                        {stockQuantity}{" "}
-                        {stockQuantity ===
-                        1
-                          ? "item"
-                          : "items"}{" "}
+                        {
+                          stockQuantity
+                        }{" "}
+                        {
+                          stockQuantity ===
+                          1
+                            ? "item"
+                            : "items"
+                        }{" "}
                         left
                       </p>
 
@@ -596,11 +772,15 @@ Thank you.
                     <div>
 
                       <p className="font-semibold">
-                        {stockQuantity}{" "}
-                        {stockQuantity ===
-                        1
-                          ? "item"
-                          : "items"}{" "}
+                        {
+                          stockQuantity
+                        }{" "}
+                        {
+                          stockQuantity ===
+                          1
+                            ? "item"
+                            : "items"
+                        }{" "}
                         in stock
                       </p>
 
@@ -626,7 +806,9 @@ Thank you.
                   </p>
 
                   <p className="mt-2 font-medium">
-                    {product.material}
+                    {
+                      product.material
+                    }
                   </p>
 
                 </div>
@@ -642,46 +824,74 @@ Thank you.
                   </h2>
 
                   <p className="mt-3 leading-7 text-gray-600">
-                    {product.description}
+                    {
+                      product.description
+                    }
                   </p>
 
                 </div>
               )}
 
               {/* ==================================================
-                  WHATSAPP
+                  SHARE + WHATSAPP
               ================================================== */}
 
-              {isOutOfStock ? (
-                <div className="mt-8">
+              <div className="mt-8 grid gap-3 sm:grid-cols-2">
 
+                {/* SHARE */}
+
+                <button
+                  type="button"
+                  onClick={
+                    handleShare
+                  }
+                  className="relative flex items-center justify-center gap-2 border border-[#6B1E1E] bg-white px-5 py-4 font-semibold text-[#6B1E1E] transition hover:bg-[#6B1E1E] hover:text-white"
+                >
+
+                  {shareMessage ? (
+                    <>
+                      <Check
+                        size={21}
+                      />
+
+                      {shareMessage}
+                    </>
+                  ) : (
+                    <>
+                      <Share2
+                        size={21}
+                      />
+
+                      Share Product
+                    </>
+                  )}
+
+                </button>
+
+                {/* WHATSAPP */}
+
+                {isOutOfStock ? (
                   <button
                     type="button"
                     disabled
-                    className="flex w-full cursor-not-allowed items-center justify-center gap-2 bg-gray-300 px-7 py-4 font-semibold text-gray-500"
+                    className="flex items-center justify-center gap-2 bg-gray-300 px-5 py-4 font-semibold text-gray-500"
                   >
 
-                    <XCircle size={21} />
+                    <XCircle
+                      size={21}
+                    />
 
-                    Currently Unavailable
+                    Unavailable
 
                   </button>
-
-                  <p className="mt-3 text-center text-xs text-gray-400">
-                    This product is currently
-                    out of stock. Please check
-                    back later.
-                  </p>
-
-                </div>
-              ) : (
-                <>
-
+                ) : (
                   <a
-                    href={whatsappURL}
+                    href={
+                      whatsappURL
+                    }
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-8 flex items-center justify-center gap-2 bg-[#8B2E2E] px-7 py-4 font-semibold text-white transition hover:bg-[#6B1E1E]"
+                    className="flex items-center justify-center gap-2 bg-[#8B2E2E] px-5 py-4 font-semibold text-white transition hover:bg-[#6B1E1E]"
                   >
 
                     <MessageCircle
@@ -691,16 +901,15 @@ Thank you.
                     Enquire on WhatsApp
 
                   </a>
+                )}
 
-                  <p className="mt-3 text-center text-xs text-gray-400">
-                    Product details, stock and
-                    current offer price will be
-                    included in your WhatsApp
-                    enquiry.
-                  </p>
+              </div>
 
-                </>
-              )}
+              <p className="mt-3 text-center text-xs text-gray-400">
+                Share this product with
+                friends or send an enquiry
+                directly to our WhatsApp.
+              </p>
 
             </div>
 
@@ -750,8 +959,12 @@ Thank you.
           >
 
             <img
-              src={product.image}
-              alt={product.name}
+              src={
+                product.image
+              }
+              alt={
+                product.name
+              }
               className="max-h-[88vh] max-w-[92vw] rounded-sm object-contain shadow-2xl"
             />
 

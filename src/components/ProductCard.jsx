@@ -1,25 +1,16 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import {
   ShoppingCart,
-  Check,
   PackageCheck,
   AlertTriangle,
   XCircle,
   Minus,
   Plus,
-  Eye,
 } from "lucide-react";
 
-import {
-  collection,
-  getDocs,
-} from "firebase/firestore";
-
-import { db } from "../firebase/firebase";
-
 import { useCart } from "../context/CartContext";
+import { useOffers } from "../context/OfferContext";
 
 function ProductCard({ product }) {
   const {
@@ -29,8 +20,13 @@ function ProductCard({ product }) {
     decreaseQuantity,
   } = useCart();
 
-  const [offer, setOffer] =
-    useState(null);
+  // ======================================================
+  // SHARED ACTIVE OFFER
+  // ======================================================
+
+  const {
+    activeOffer: offer,
+  } = useOffers();
 
   // ======================================================
   // FIND CURRENT CART ITEM
@@ -46,61 +42,6 @@ function ProductCard({ product }) {
     Number(
       cartItem?.quantity || 0
     );
-
-  // ======================================================
-  // LOAD ACTIVE OFFER
-  // ======================================================
-
-  useEffect(() => {
-    const loadOffer = async () => {
-      try {
-        const snapshot =
-          await getDocs(
-            collection(
-              db,
-              "offers"
-            )
-          );
-
-        const today =
-          new Date()
-            .toISOString()
-            .split("T")[0];
-
-        const activeOffer =
-          snapshot.docs
-            .map((item) => ({
-              id: item.id,
-              ...item.data(),
-            }))
-            .find((item) => {
-              return (
-                item.active === true &&
-                Number(
-                  item.discountPercent
-                ) > 0 &&
-                today >=
-                  item.startDate &&
-                today <=
-                  item.endDate
-              );
-            });
-
-        setOffer(
-          activeOffer || null
-        );
-      } catch (error) {
-        console.error(
-          "Unable to load offer:",
-          error
-        );
-
-        setOffer(null);
-      }
-    };
-
-    loadOffer();
-  }, []);
 
   // ======================================================
   // STOCK
@@ -219,6 +160,10 @@ function ProductCard({ product }) {
       product.id
     );
   };
+
+  // ======================================================
+  // PRODUCT CARD
+  // ======================================================
 
   return (
     <div className="group overflow-hidden bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl">
@@ -354,16 +299,25 @@ function ProductCard({ product }) {
               {hasOffer ? (
                 <>
                   <p className="text-sm text-gray-400 line-through">
-                    ₹{formattedOriginalPrice}
+                    ₹
+                    {
+                      formattedOriginalPrice
+                    }
                   </p>
 
                   <p className="text-xl font-bold text-[#8B2E2E]">
-                    ₹{formattedDiscountedPrice}
+                    ₹
+                    {
+                      formattedDiscountedPrice
+                    }
                   </p>
                 </>
               ) : (
                 <p className="text-xl font-bold text-[#8B2E2E]">
-                  ₹{formattedOriginalPrice}
+                  ₹
+                  {
+                    formattedOriginalPrice
+                  }
                 </p>
               )}
 
@@ -380,7 +334,9 @@ function ProductCard({ product }) {
                 className="flex cursor-not-allowed items-center gap-2 bg-gray-400 px-4 py-2.5 text-sm font-semibold text-white"
               >
 
-                <XCircle size={17} />
+                <XCircle
+                  size={17}
+                />
 
                 Unavailable
 

@@ -27,6 +27,9 @@ import {
 import { db } from "../firebase/firebase";
 import { useCart } from "../context/CartContext";
 
+const WEBSITE_URL =
+  "https://hariomfurniturehouse.netlify.app";
+
 function Cart() {
   const {
     cartItems,
@@ -91,9 +94,7 @@ function Cart() {
   // CUSTOMER DETAILS
   // ======================================================
 
-  const handleCustomerChange = (
-    e
-  ) => {
+  const handleCustomerChange = (e) => {
     const {
       name,
       value,
@@ -109,9 +110,7 @@ function Cart() {
   // STOCK HELPERS
   // ======================================================
 
-  const getStockQuantity = (
-    item
-  ) => {
+  const getStockQuantity = (item) => {
     return Math.max(
       0,
       Number(
@@ -133,12 +132,86 @@ function Cart() {
     });
 
   // ======================================================
+  // CREATE ADMIN ORDER NOTIFICATION
+  // ======================================================
+
+  const createOrderNotification = async ({
+    orderId,
+    orderItems,
+    total,
+    customerName,
+  }) => {
+    try {
+      const firstItem =
+        orderItems[0];
+
+      const itemCount =
+        orderItems.reduce(
+          (totalItems, item) =>
+            totalItems +
+            Number(
+              item.quantity || 0
+            ),
+          0
+        );
+
+      const productNames =
+        orderItems
+          .map((item) => {
+            return `${item.name} × ${item.quantity}`;
+          })
+          .join(", ");
+
+      await addDoc(
+        collection(db, "notifications"),
+        {
+          type: "order",
+
+          title:
+            "New Customer Order",
+
+          message:
+            `${customerName} placed an order: ${productNames}`,
+
+          orderId,
+
+          customerName,
+
+          total: Number(total || 0),
+
+          itemCount,
+
+          // Main product image.
+          // Useful for the notification preview.
+          image:
+            firstItem?.image || "",
+
+          // Main product ID.
+          productId:
+            firstItem?.productId || "",
+
+          createdAt:
+            serverTimestamp(),
+
+          read: false,
+        }
+      );
+    } catch (error) {
+      // IMPORTANT:
+      // Do NOT fail the customer's order if
+      // the notification cannot be created.
+      console.error(
+        "Order notification could not be created:",
+        error
+      );
+    }
+  };
+
+  // ======================================================
   // SEND ORDER
   // ======================================================
 
-  const sendOrderToWhatsApp = async (
-    e
-  ) => {
+  const sendOrderToWhatsApp = async (e) => {
     e.preventDefault();
 
     if (!cartItems.length) {
@@ -217,9 +290,10 @@ function Cart() {
     // WHATSAPP NUMBER
     // ==================================================
 
-    const whatsappNumber = String(
-      settings.whatsapp || ""
-    ).replace(/\D/g, "");
+    const whatsappNumber =
+      String(
+        settings.whatsapp || ""
+      ).replace(/\D/g, "");
 
     if (!whatsappNumber) {
       alert(
@@ -279,20 +353,14 @@ function Cart() {
             image:
               item.image || "",
 
-            // Current selling price
             price,
 
-            // Original price
             originalPrice,
 
-            // Discount
             discountPercent,
 
-            // Ordered quantity
             quantity,
 
-            // Available stock at
-            // time of order
             stockQuantity,
 
             itemTotal,
@@ -336,6 +404,18 @@ function Cart() {
         );
 
       // ==================================================
+      // CREATE ADMIN NOTIFICATION
+      // ==================================================
+
+      await createOrderNotification({
+        orderId: orderRef.id,
+        orderItems,
+        total: cartTotal,
+        customerName:
+          customer.name.trim(),
+      });
+
+      // ==================================================
       // WHATSAPP MESSAGE
       // ==================================================
 
@@ -357,6 +437,9 @@ ORDER ITEMS
 
       orderItems.forEach(
         (item, index) => {
+          const productURL =
+            `${WEBSITE_URL}/product/${item.productId}`;
+
           message += `
 
 ${index + 1}. ${item.name}
@@ -401,6 +484,21 @@ Available Stock: ${item.stockQuantity}
 Item Total: ₹${item.itemTotal.toLocaleString(
             "en-IN"
           )}`;
+
+          // ==================================================
+          // PRODUCT LINKS
+          // ==================================================
+
+          message += `
+
+🖼️ Product Image:
+${
+            item.image ||
+            "Image not available"
+          }
+
+🔗 View Product:
+${productURL}`;
         }
       );
 
@@ -511,9 +609,7 @@ Thank you.`;
 
       <div className="mx-auto max-w-7xl">
 
-        {/* ==================================================
-            HEADER
-        ================================================== */}
+        {/* HEADER */}
 
         <div className="mb-8">
 
@@ -536,9 +632,7 @@ Thank you.`;
 
         </div>
 
-        {/* ==================================================
-            GLOBAL STOCK WARNING
-        ================================================== */}
+        {/* GLOBAL STOCK WARNING */}
 
         {hasStockIssue && (
           <div className="mb-6 flex items-start gap-3 border border-orange-200 bg-orange-50 p-4 text-sm text-orange-700">
@@ -568,9 +662,7 @@ Thank you.`;
 
         <div className="grid gap-8 lg:grid-cols-[1fr_400px]">
 
-          {/* ==================================================
-              CART ITEMS
-          ================================================== */}
+          {/* CART ITEMS */}
 
           <div className="space-y-4">
 
@@ -627,9 +719,7 @@ Thank you.`;
                   className="flex flex-col gap-5 bg-white p-5 shadow-sm sm:flex-row"
                 >
 
-                  {/* ==================================================
-                      IMAGE
-                  ================================================== */}
+                  {/* IMAGE */}
 
                   <Link
                     to={`/product/${item.id}`}
@@ -668,9 +758,7 @@ Thank you.`;
 
                   </Link>
 
-                  {/* ==================================================
-                      INFORMATION
-                  ================================================== */}
+                  {/* INFORMATION */}
 
                   <div className="flex flex-1 flex-col justify-between">
 
@@ -690,9 +778,7 @@ Thank you.`;
                         </p>
                       )}
 
-                      {/* ==================================================
-                          STOCK STATUS
-                      ================================================== */}
+                      {/* STOCK STATUS */}
 
                       <div className="mt-3">
 
@@ -741,9 +827,7 @@ Thank you.`;
 
                       </div>
 
-                      {/* ==================================================
-                          PRICE
-                      ================================================== */}
+                      {/* PRICE */}
 
                       {hasDiscount ? (
                         <div className="mt-3">
@@ -782,17 +866,13 @@ Thank you.`;
 
                     </div>
 
-                    {/* ==================================================
-                        QUANTITY + TOTAL
-                    ================================================== */}
+                    {/* QUANTITY + TOTAL */}
 
                     <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
 
                       <div>
 
                         <div className="flex items-center border border-gray-200">
-
-                          {/* MINUS */}
 
                           <button
                             type="button"
@@ -810,13 +890,9 @@ Thank you.`;
                             <Minus size={16} />
                           </button>
 
-                          {/* QUANTITY */}
-
                           <span className="flex h-9 min-w-10 items-center justify-center border-x border-gray-200 text-sm font-semibold">
                             {quantity}
                           </span>
-
-                          {/* PLUS */}
 
                           <button
                             type="button"
@@ -836,8 +912,6 @@ Thank you.`;
                           </button>
 
                         </div>
-
-                        {/* MAX STOCK MESSAGE */}
 
                         {!isOutOfStock &&
                           maximumReached && (
@@ -884,9 +958,7 @@ Thank you.`;
 
           </div>
 
-          {/* ==================================================
-              ORDER FORM
-          ================================================== */}
+          {/* ORDER FORM */}
 
           <div className="h-fit bg-white p-6 shadow-sm lg:sticky lg:top-28">
 
@@ -997,9 +1069,7 @@ Thank you.`;
 
               </div>
 
-              {/* ==================================================
-                  STOCK CHECKOUT WARNING
-              ================================================== */}
+              {/* STOCK CHECKOUT WARNING */}
 
               {hasStockIssue && (
                 <div className="border border-red-200 bg-red-50 p-3 text-xs leading-5 text-red-700">
@@ -1022,9 +1092,7 @@ Thank you.`;
                 </div>
               )}
 
-              {/* ==================================================
-                  TOTAL
-              ================================================== */}
+              {/* TOTAL */}
 
               <div className="border-t border-gray-100 pt-5">
 
@@ -1045,9 +1113,7 @@ Thank you.`;
 
               </div>
 
-              {/* ==================================================
-                  WHATSAPP
-              ================================================== */}
+              {/* WHATSAPP */}
 
               <button
                 type="submit"

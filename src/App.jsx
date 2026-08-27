@@ -10,6 +10,10 @@ import {
 
 import ScrollToTop from "./components/ScrollToTop";
 
+import {
+  ThemeProvider,
+} from "./context/ThemeContext";
+
 // ======================================================
 // CUSTOMER PAGES
 // ======================================================
@@ -54,163 +58,195 @@ import Offers from "./pages/admin/Offers";
 
 function App() {
   return (
-    <BrowserRouter>
+    <ThemeProvider>
 
-      {/* ==================================================
-          SCROLL TO TOP ON EVERY ROUTE CHANGE
-      ================================================== */}
-
-      <ScrollToTop />
-
-      <Routes>
+      <BrowserRouter>
 
         {/* ==================================================
-            CUSTOMER WEBSITE
-            MainLayout contains Header + Footer
+            SCROLL TO TOP ON EVERY ROUTE CHANGE
         ================================================== */}
 
-        <Route element={<MainLayout />}>
+        <ScrollToTop />
 
-          {/* HOME */}
-
-          <Route
-            path="/"
-            element={<Home />}
-          />
-
-          {/* SHOP */}
-
-          <Route
-            path="/shop"
-            element={<Shop />}
-          />
-
-          {/* PRODUCT DETAILS */}
-
-          <Route
-            path="/product/:id"
-            element={<ProductDetails />}
-          />
-
-          {/* CUSTOM FURNITURE */}
-
-          <Route
-            path="/custom-furniture"
-            element={<CustomFurniture />}
-          />
-
-          {/* CART */}
-
-          <Route
-            path="/cart"
-            element={<Cart />}
-          />
-
-        </Route>
-
-        {/* ==================================================
-            ADMIN LOGIN
-            NO SIDEBAR
-        ================================================== */}
-
-        <Route
-          path="/admin"
-          element={<AdminLogin />}
-        />
-
-        {/* ==================================================
-            ADMIN AREA
-            AdminLayout provides static sidebar
-        ================================================== */}
-
-        <Route element={<AdminLayout />}>
+        <Routes>
 
           {/* ==================================================
-              DASHBOARD
+              CUSTOMER WEBSITE
+              MainLayout contains Header + Footer
           ================================================== */}
 
           <Route
-            path="/admin/dashboard"
-            element={<AdminDashboard />}
-          />
+            element={
+              <MainLayout />
+            }
+          >
+
+            {/* HOME */}
+
+            <Route
+              path="/"
+              element={<Home />}
+            />
+
+            {/* SHOP */}
+
+            <Route
+              path="/shop"
+              element={<Shop />}
+            />
+
+            {/* PRODUCT DETAILS */}
+
+            <Route
+              path="/product/:id"
+              element={
+                <ProductDetails />
+              }
+            />
+
+            {/* CUSTOM FURNITURE */}
+
+            <Route
+              path="/custom-furniture"
+              element={
+                <CustomFurniture />
+              }
+            />
+
+            {/* CART */}
+
+            <Route
+              path="/cart"
+              element={<Cart />}
+            />
+
+          </Route>
 
           {/* ==================================================
-              PRODUCTS
+              ADMIN LOGIN
+              NO SIDEBAR
           ================================================== */}
 
           <Route
-            path="/admin/products"
-            element={<AdminProducts />}
+            path="/admin"
+            element={
+              <AdminLogin />
+            }
           />
 
           {/* ==================================================
-              ADD PRODUCT
+              ADMIN AREA
+              AdminLayout provides static sidebar
           ================================================== */}
 
           <Route
-            path="/admin/products/add"
-            element={<AddProduct />}
-          />
+            element={
+              <AdminLayout />
+            }
+          >
 
-          {/* ==================================================
-              EDIT PRODUCT
-          ================================================== */}
+            {/* ==================================================
+                DASHBOARD
+            ================================================== */}
 
-          <Route
-            path="/admin/products/edit/:id"
-            element={<EditProduct />}
-          />
+            <Route
+              path="/admin/dashboard"
+              element={
+                <AdminDashboard />
+              }
+            />
 
-          {/* ==================================================
-              ORDERS
-          ================================================== */}
+            {/* ==================================================
+                PRODUCTS
+            ================================================== */}
 
-          <Route
-            path="/admin/orders"
-            element={<AdminOrders />}
-          />
+            <Route
+              path="/admin/products"
+              element={
+                <AdminProducts />
+              }
+            />
 
-          {/* ==================================================
-              CUSTOM REQUESTS
-          ================================================== */}
+            {/* ==================================================
+                ADD PRODUCT
+            ================================================== */}
 
-          <Route
-            path="/admin/requests"
-            element={<AdminRequests />}
-          />
+            <Route
+              path="/admin/products/add"
+              element={<AddProduct />}
+            />
 
-          {/* ==================================================
-              NOTIFICATIONS
-          ================================================== */}
+            {/* ==================================================
+                EDIT PRODUCT
+            ================================================== */}
 
-          <Route
-            path="/admin/notifications"
-            element={<Notifications />}
-          />
+            <Route
+              path="/admin/products/edit/:id"
+              element={
+                <EditProduct />
+              }
+            />
 
-          {/* ==================================================
-              OFFERS - NEW
-          ================================================== */}
+            {/* ==================================================
+                ORDERS
+            ================================================== */}
 
-          <Route
-            path="/admin/offers"
-            element={<Offers />}
-          />
+            <Route
+              path="/admin/orders"
+              element={
+                <AdminOrders />
+              }
+            />
 
-          {/* ==================================================
-              WEBSITE SETTINGS
-          ================================================== */}
+            {/* ==================================================
+                CUSTOM REQUESTS
+            ================================================== */}
 
-          <Route
-            path="/admin/settings"
-            element={<WebsiteSettings />}
-          />
+            <Route
+              path="/admin/requests"
+              element={
+                <AdminRequests />
+              }
+            />
 
-        </Route>
+            {/* ==================================================
+                NOTIFICATIONS
+            ================================================== */}
 
-      </Routes>
+            <Route
+              path="/admin/notifications"
+              element={
+                <Notifications />
+              }
+            />
 
-    </BrowserRouter>
+            {/* ==================================================
+                OFFERS
+            ================================================== */}
+
+            <Route
+              path="/admin/offers"
+              element={<Offers />}
+            />
+
+            {/* ==================================================
+                WEBSITE SETTINGS
+            ================================================== */}
+
+            <Route
+              path="/admin/settings"
+              element={
+                <WebsiteSettings />
+              }
+            />
+
+          </Route>
+
+        </Routes>
+
+      </BrowserRouter>
+
+    </ThemeProvider>
   );
 }
 
