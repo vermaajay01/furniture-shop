@@ -73,7 +73,7 @@ function Home() {
     },
     {
       src:
-        "https://muto-web.com/wp-content/uploads/2023/05/1BF295A8-E4B1-4AC5-86C8-9D9D521AB8B22.jpeg",
+        "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=2200&q=85",
       alt:
         "Contemporary wooden furniture showroom",
       position: "center",
