@@ -1,10 +1,7 @@
 import {
-  collection,
-  addDoc,
-  query,
-  where,
-  getDocs,
-  updateDoc,
+  doc,
+  getDoc,
+  setDoc,
   serverTimestamp,
 } from "firebase/firestore";
 
@@ -18,7 +15,7 @@ const VISITOR_ID_KEY =
   "hari_om_visitor_id";
 
 // ======================================================
-// DEVICE DETECTION
+// GET DEVICE TYPE
 // ======================================================
 
 function getDeviceType() {
@@ -36,16 +33,14 @@ function getDeviceType() {
 }
 
 // ======================================================
-// BROWSER DETECTION
+// GET BROWSER
 // ======================================================
 
 function getBrowser() {
   const userAgent =
     navigator.userAgent;
 
-  if (
-    userAgent.includes("Edg/")
-  ) {
+  if (userAgent.includes("Edg/")) {
     return "Microsoft Edge";
   }
 
@@ -63,9 +58,7 @@ function getBrowser() {
     return "Google Chrome";
   }
 
-  if (
-    userAgent.includes("Firefox")
-  ) {
+  if (userAgent.includes("Firefox")) {
     return "Mozilla Firefox";
   }
 
@@ -141,41 +134,29 @@ export async function trackVisitor() {
     const browser =
       getBrowser();
 
-    const visitorsRef =
-      collection(
-        db,
-        "visitors"
-      );
+    // ==================================================
+    // VISITOR DOCUMENT
+    //
+    // Visitor ID itself becomes the document ID.
+    // No collection query is required.
+    // ==================================================
 
-    // ====================================================
-    // FIND EXISTING UNIQUE VISITOR
-    // ====================================================
+    const visitorRef = doc(
+      db,
+      "visitors",
+      visitorId
+    );
 
-    const visitorQuery =
-      query(
-        visitorsRef,
-        where(
-          "visitorId",
-          "==",
-          visitorId
-        )
-      );
+    const visitorSnapshot =
+      await getDoc(visitorRef);
 
-    const snapshot =
-      await getDocs(
-        visitorQuery
-      );
-
-    // ====================================================
+    // ==================================================
     // EXISTING VISITOR
-    // ====================================================
+    // ==================================================
 
-    if (!snapshot.empty) {
-      const existingVisitor =
-        snapshot.docs[0];
-
-      await updateDoc(
-        existingVisitor.ref,
+    if (visitorSnapshot.exists()) {
+      await setDoc(
+        visitorRef,
         {
           deviceType:
             deviceType,
@@ -188,18 +169,21 @@ export async function trackVisitor() {
 
           lastVisitAt:
             serverTimestamp(),
+        },
+        {
+          merge: true,
         }
       );
 
       return;
     }
 
-    // ====================================================
+    // ==================================================
     // NEW UNIQUE VISITOR
-    // ====================================================
+    // ==================================================
 
-    await addDoc(
-      visitorsRef,
+    await setDoc(
+      visitorRef,
       {
         visitorId:
           visitorId,
