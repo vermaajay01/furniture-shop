@@ -59,14 +59,14 @@ function Home() {
     },
     {
       src:
-        "https://heyagoto.com/wp-content/uploads/2019/02/72dde9a7009864439f9ac06917b1acd3-768x475.jpg",
+        "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=2200&q=85",
       alt:
         "Modern wooden furniture showroom",
       position: "center",
     },
     {
       src:
-        "https://r100tokyo.com/cms_ver2/wp-content/uploads/2021/09/ph_article_7405.jpg",
+        "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=2200&q=85",
       alt:
         "Warm wooden dining and living furniture",
       position: "center",
