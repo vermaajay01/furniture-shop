@@ -124,6 +124,8 @@ function Home() {
 
       openingHours:
         "Mon - Sun: 10:00 AM - 8:00 PM",
+
+      themeId: "classic-maroon",
     });
 
   // ======================================================
@@ -499,6 +501,20 @@ function Home() {
   ];
 
   // ======================================================
+  // ACTIVE WEBSITE THEME
+  // ======================================================
+
+  const themes = {
+    "classic-maroon": { page: "var(--site-page)", surface: "#FFFFFF", section: "var(--site-section)", primary: "var(--site-primary)", accent: "var(--site-accent)", dark: "var(--site-dark)", gold: "var(--site-gold)", softGold: "var(--site-soft-gold)", softAccent: "var(--site-soft-accent)", text: "var(--site-text)" },
+    "forest-green": { page: "#F2F7F3", surface: "#FFFFFF", section: "#E2EDE5", primary: "#315C46", accent: "#3E7658", dark: "#193B2A", gold: "#C2A15A", softGold: "#A7B99F", softAccent: "#E2EDE5", text: "#183025" },
+    "royal-navy": { page: "#F2F5F9", surface: "#FFFFFF", section: "#E1E8F0", primary: "#243B5A", accent: "#31577F", dark: "#172B43", gold: "#C7A65A", softGold: "#AEBED0", softAccent: "#E1E8F0", text: "#172B43" },
+    "walnut-brown": { page: "#F7F1EB", surface: "#FFFFFF", section: "#EADFD4", primary: "#5A3928", accent: "#765039", dark: "#382318", gold: "#C19A63", softGold: "#B99A78", softAccent: "#EADFD4", text: "#382318" },
+    "modern-charcoal": { page: "#F3F4F5", surface: "#FFFFFF", section: "#E3E5E8", primary: "#30343B", accent: "#464D57", dark: "#20242A", gold: "#C5A66A", softGold: "#AEB1B5", softAccent: "#E3E5E8", text: "#25282D" },
+  };
+
+  const activeTheme = themes[settings.themeId] || themes["classic-maroon"];
+
+  // ======================================================
   // CONTACT LINKS
   // ======================================================
 
@@ -524,7 +540,22 @@ function Home() {
   // ======================================================
 
   return (
-    <div className="min-h-screen bg-[#F8F1E7] text-[#2B1714]">
+    <div
+      className="min-h-screen text-[var(--site-text)]"
+      style={{
+        "--site-page": activeTheme.page,
+        "--site-surface": activeTheme.surface,
+        "--site-section": activeTheme.section,
+        "--site-primary": activeTheme.primary,
+        "--site-accent": activeTheme.accent,
+        "--site-dark": activeTheme.dark,
+        "--site-gold": activeTheme.gold,
+        "--site-soft-gold": activeTheme.softGold,
+        "--site-soft-accent": activeTheme.softAccent,
+        "--site-text": activeTheme.text,
+        backgroundColor: "var(--site-page)",
+      }}
+    >
 
       {/* ==================================================
           FLOATING DYNAMIC OFFER BANNER
@@ -534,11 +565,11 @@ function Home() {
         currentOffer && (
           <section className="relative z-30 px-3 py-2 sm:px-5 sm:py-3">
 
-            <div className="relative mx-auto max-w-7xl overflow-hidden rounded-xl border border-[#E0B66B]/40 bg-[#3A0D0D] shadow-[0_8px_30px_rgba(58,13,13,0.25)]">
+            <div className="relative mx-auto max-w-7xl overflow-hidden rounded-xl border border-[var(--site-gold)]/40 bg-[var(--site-dark)] shadow-[0_8px_30px_rgba(58,13,13,0.25)]">
 
               {/* SUBTLE GLOW */}
 
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#8B2E2E]/20 via-[#E0B66B]/10 to-[#8B2E2E]/20" />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[var(--site-accent)]/20 via-[var(--site-gold)]/10 to-[var(--site-accent)]/20" />
 
               <div className="relative flex min-h-[64px] items-center justify-center gap-2 px-10 py-3 sm:min-h-[72px] sm:px-16">
 
@@ -566,7 +597,7 @@ function Home() {
                   className="flex min-w-0 flex-1 items-center justify-center gap-3 text-center"
                 >
 
-                  <span className="hidden shrink-0 sm:flex h-9 w-9 items-center justify-center rounded-full bg-[#E0B66B]/15 text-[#E0B66B]">
+                  <span className="hidden shrink-0 sm:flex h-9 w-9 items-center justify-center rounded-full bg-[var(--site-gold)]/15 text-[var(--site-gold)]">
                     <Tag size={17} />
                   </span>
 
@@ -574,7 +605,7 @@ function Home() {
 
                     <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
 
-                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#E0B66B] sm:text-xs">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--site-gold)] sm:text-xs">
                         Limited Time Offer
                       </span>
 
@@ -598,7 +629,7 @@ function Home() {
 
                   <ArrowRight
                     size={17}
-                    className="hidden shrink-0 text-[#E0B66B] sm:block"
+                    className="hidden shrink-0 text-[var(--site-gold)] sm:block"
                   />
 
                 </Link>
@@ -642,7 +673,7 @@ function Home() {
                         className={`h-1 rounded-full transition-all duration-300 ${
                           index ===
                           offerIndex
-                            ? "w-5 bg-[#E0B66B]"
+                            ? "w-5 bg-[var(--site-gold)]"
                             : "w-1 bg-white/40"
                         }`}
                       />
@@ -696,7 +727,7 @@ function Home() {
 
         {/* WARM BRAND TINT */}
 
-        <div className="absolute inset-0 bg-[#3A0D0D]/10" />
+        <div className="absolute inset-0 bg-[var(--site-dark)]/10" />
 
         {/* HERO CONTENT */}
 
@@ -704,7 +735,7 @@ function Home() {
 
           <div className="max-w-3xl text-white">
 
-            <p className="mb-5 uppercase tracking-[0.35em] text-[#E0B66B]">
+            <p className="mb-5 uppercase tracking-[0.35em] text-[var(--site-gold)]">
               Crafted with care
             </p>
 
@@ -712,7 +743,7 @@ function Home() {
 
               Furniture that makes
 
-              <span className="block text-[#E0B66B]">
+              <span className="block text-[var(--site-gold)]">
                 your house a home.
               </span>
 
@@ -728,7 +759,7 @@ function Home() {
 
               <Link
                 to="/shop"
-                className="flex w-full items-center justify-center gap-2 bg-[#8B2E2E] px-6 py-3.5 font-semibold transition hover:bg-[#6B1E1E] sm:w-auto sm:px-7 sm:py-4"
+                className="flex w-full items-center justify-center gap-2 bg-[var(--site-accent)] px-6 py-3.5 font-semibold transition hover:bg-[var(--site-primary)] sm:w-auto sm:px-7 sm:py-4"
               >
                 Explore Collection
 
@@ -780,7 +811,7 @@ function Home() {
                 }}
                 className={`h-2 rounded-full transition-all duration-300 ${
                   index === heroIndex
-                    ? "w-7 bg-[#E0B66B]"
+                    ? "w-7 bg-[var(--site-gold)]"
                     : "w-2 bg-white/60 hover:bg-white"
                 }`}
               />
@@ -804,7 +835,7 @@ function Home() {
 
           <div className="mb-12 text-center">
 
-            <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#8B2E2E]">
+            <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[var(--site-accent)]">
               Explore
             </p>
 
@@ -831,11 +862,11 @@ function Home() {
                         category.name
                       }
                       to="/custom-furniture"
-                      className="group border border-black/10 bg-white p-7 text-center transition hover:-translate-y-1 hover:shadow-xl"
+                      className="group border border-black/10 bg-[var(--site-surface)] p-7 text-center transition hover:-translate-y-1 hover:shadow-xl"
                     >
 
                       <Icon
-                        className="mx-auto mb-5 text-[#8B2E2E] transition group-hover:scale-110"
+                        className="mx-auto mb-5 text-[var(--site-accent)] transition group-hover:scale-110"
                         size={36}
                         strokeWidth={1.5}
                       />
@@ -858,11 +889,11 @@ function Home() {
                     to={`/shop?category=${encodeURIComponent(
                       category.name
                     )}`}
-                    className="group border border-black/10 bg-white p-7 text-center transition hover:-translate-y-1 hover:shadow-xl"
+                    className="group border border-black/10 bg-[var(--site-surface)] p-7 text-center transition hover:-translate-y-1 hover:shadow-xl"
                   >
 
                     <Icon
-                      className="mx-auto mb-5 text-[#8B2E2E] transition group-hover:scale-110"
+                      className="mx-auto mb-5 text-[var(--site-accent)] transition group-hover:scale-110"
                       size={36}
                       strokeWidth={1.5}
                     />
@@ -890,7 +921,7 @@ function Home() {
 
       <section
         id="shop"
-        className="bg-[#EDE0D2] px-6 py-24"
+        className="bg-[var(--site-section)] px-6 py-24"
       >
 
         <div className="mx-auto max-w-7xl">
@@ -899,7 +930,7 @@ function Home() {
 
             <div>
 
-              <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#8B2E2E]">
+              <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[var(--site-accent)]">
                 Our Collection
               </p>
 
@@ -911,7 +942,7 @@ function Home() {
 
             <Link
               to="/shop"
-              className="flex items-center gap-2 font-semibold text-[#8B2E2E]"
+              className="flex items-center gap-2 font-semibold text-[var(--site-accent)]"
             >
               View All
 
@@ -923,7 +954,7 @@ function Home() {
           {loadingProducts && (
             <div className="flex min-h-[300px] items-center justify-center">
 
-              <div className="flex items-center gap-3 text-[#8B2E2E]">
+              <div className="flex items-center gap-3 text-[var(--site-accent)]">
 
                 <Loader2
                   size={24}
@@ -955,7 +986,7 @@ function Home() {
 
                 <Link
                   to="/shop"
-                  className="mt-6 inline-flex items-center gap-2 bg-[#8B2E2E] px-6 py-3 font-semibold text-white"
+                  className="mt-6 inline-flex items-center gap-2 bg-[var(--site-accent)] px-6 py-3 font-semibold text-white"
                 >
                   Browse All Furniture
 
@@ -1001,11 +1032,11 @@ function Home() {
         className="px-6 py-24"
       >
 
-        <div className="mx-auto grid max-w-7xl overflow-hidden bg-[#3A0D0D] md:grid-cols-2">
+        <div className="mx-auto grid max-w-7xl overflow-hidden bg-[var(--site-dark)] md:grid-cols-2">
 
           <div className="p-10 text-white md:p-16">
 
-            <p className="mb-4 uppercase tracking-[0.3em] text-[#E0B66B]">
+            <p className="mb-4 uppercase tracking-[0.3em] text-[var(--site-gold)]">
               Made for you
             </p>
 
@@ -1024,7 +1055,7 @@ function Home() {
 
             <Link
               to="/custom-furniture"
-              className="mt-8 inline-flex items-center gap-2 bg-[#8B2E2E] px-7 py-4 font-semibold transition hover:bg-[#6B1E1E]"
+              className="mt-8 inline-flex items-center gap-2 bg-[var(--site-accent)] px-7 py-4 font-semibold transition hover:bg-[var(--site-primary)]"
             >
               Request Custom Quote
 
@@ -1051,12 +1082,12 @@ function Home() {
 
       <section
         id="about"
-        className="bg-white px-6 py-24"
+        className="bg-[var(--site-surface)] px-6 py-24"
       >
 
         <div className="mx-auto max-w-7xl text-center">
 
-          <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#8B2E2E]">
+          <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[var(--site-accent)]">
             Why Choose Us
           </p>
 
@@ -1099,7 +1130,7 @@ function Home() {
                   className="p-6"
                 >
 
-                  <p className="text-4xl font-bold text-[#CFAE8A]">
+                  <p className="text-4xl font-bold text-[var(--site-soft-gold)]">
                     {number}
                   </p>
 
@@ -1127,14 +1158,14 @@ function Home() {
 
       <section
         id="contact"
-        className="bg-[#F8F1E7] px-6 py-24"
+        className="bg-[var(--site-page)] px-6 py-24"
       >
 
         <div className="mx-auto max-w-7xl">
 
           <div className="mb-12 text-center">
 
-            <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#8B2E2E]">
+            <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[var(--site-accent)]">
               Visit Us
             </p>
 
@@ -1156,9 +1187,9 @@ function Home() {
 
             {/* ADDRESS */}
 
-            <div className="bg-white p-7 shadow-sm">
+            <div className="bg-[var(--site-surface)] p-7 shadow-sm">
 
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F5E4E4] text-[#8B2E2E]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--site-soft-accent)] text-[var(--site-accent)]">
                 <MapPin size={22} />
               </div>
 
@@ -1177,7 +1208,7 @@ function Home() {
                   }
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#8B2E2E] hover:underline"
+                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[var(--site-accent)] hover:underline"
                 >
                   Open in Google Maps
 
@@ -1191,9 +1222,9 @@ function Home() {
 
             {/* PHONE */}
 
-            <div className="bg-white p-7 shadow-sm">
+            <div className="bg-[var(--site-surface)] p-7 shadow-sm">
 
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F5E4E4] text-[#8B2E2E]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--site-soft-accent)] text-[var(--site-accent)]">
                 <Phone size={22} />
               </div>
 
@@ -1207,7 +1238,7 @@ function Home() {
                     ? `tel:${phoneNumber}`
                     : "#"
                 }
-                className="mt-3 block text-gray-600 transition hover:text-[#8B2E2E]"
+                className="mt-3 block text-gray-600 transition hover:text-[var(--site-accent)]"
               >
                 {settings.phone}
               </a>
@@ -1221,9 +1252,9 @@ function Home() {
 
             {/* WHATSAPP */}
 
-            <div className="bg-white p-7 shadow-sm">
+            <div className="bg-[var(--site-surface)] p-7 shadow-sm">
 
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F5E4E4] text-[#8B2E2E]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--site-soft-accent)] text-[var(--site-accent)]">
                 <MessageCircle
                   size={22}
                 />
@@ -1237,7 +1268,7 @@ function Home() {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 block font-medium text-[#8B2E2E] hover:underline"
+                className="mt-3 block font-medium text-[var(--site-accent)] hover:underline"
               >
                 Chat With Us
               </a>
@@ -1252,9 +1283,9 @@ function Home() {
 
             {/* EMAIL / HOURS */}
 
-            <div className="bg-white p-7 shadow-sm">
+            <div className="bg-[var(--site-surface)] p-7 shadow-sm">
 
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#F5E4E4] text-[#8B2E2E]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--site-soft-accent)] text-[var(--site-accent)]">
                 <Mail size={22} />
               </div>
 
@@ -1264,7 +1295,7 @@ function Home() {
 
               <a
                 href={`mailto:${settings.email}`}
-                className="mt-3 block break-all text-gray-600 transition hover:text-[#8B2E2E]"
+                className="mt-3 block break-all text-gray-600 transition hover:text-[var(--site-accent)]"
               >
                 {settings.email}
               </a>
@@ -1273,7 +1304,7 @@ function Home() {
 
                 <Clock
                   size={16}
-                  className="mt-0.5 shrink-0 text-[#8B2E2E]"
+                  className="mt-0.5 shrink-0 text-[var(--site-accent)]"
                 />
 
                 <span>
@@ -1302,7 +1333,7 @@ function Home() {
           onClick={scrollToTop}
           aria-label="Scroll to top"
           title="Back to top"
-          className="fixed bottom-6 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[#6B1E1E] text-white shadow-xl transition duration-300 hover:-translate-y-1 hover:bg-[#8B2E2E] hover:shadow-[0_8px_25px_rgba(107,30,30,0.4)]"
+          className="fixed bottom-6 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--site-primary)] text-white shadow-xl transition duration-300 hover:-translate-y-1 hover:bg-[var(--site-accent)] hover:shadow-[0_8px_25px_rgba(107,30,30,0.4)]"
         >
           <ArrowUp size={21} />
         </button>

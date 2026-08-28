@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import {
@@ -7,7 +7,9 @@ import {
   orderBy,
   query,
   doc,
+  addDoc,
   updateDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 
 import {
@@ -25,6 +27,9 @@ import { db } from "../../firebase/firebase";
 function AdminOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   // ======================================================
   // LOAD ORDERS
@@ -72,21 +77,87 @@ function AdminOrders() {
     status
   ) => {
     try {
+      const order = orders.find(
+        (item) => item.id === orderId
+      );
+
+      if (!order) {
+        return;
+      }
+
+      const previousStatus =
+        order.status || "new";
+
       await updateDoc(
         doc(db, "orders", orderId),
         {
           status,
+          statusUpdatedAt:
+            serverTimestamp(),
         }
       );
 
+      // ==================================================
+      // CUSTOMER NOTIFICATION
+      //
+      // The customer's Firebase UID should be stored on
+      // the order as userId/customer.uid when the order
+      // is created.
+      // ==================================================
+
+      const customerUid =
+        order.userId ||
+        order.customer?.uid ||
+        order.customerId ||
+        null;
+
+      if (
+        customerUid &&
+        previousStatus !== status
+      ) {
+        await addDoc(
+          collection(
+            db,
+            "customerNotifications"
+          ),
+          {
+            userId:
+              customerUid,
+
+            orderId:
+              orderId,
+
+            type:
+              "order_status",
+
+            title:
+              "Order Status Updated",
+
+            message:
+              `Your order ${orderId} is now ${getStatusLabel(
+                status
+              )}.`,
+
+            status:
+              status,
+
+            read:
+              false,
+
+            createdAt:
+              serverTimestamp(),
+          }
+        );
+      }
+
       setOrders((previous) =>
-        previous.map((order) =>
-          order.id === orderId
+        previous.map((item) =>
+          item.id === orderId
             ? {
-                ...order,
+                ...item,
                 status,
               }
-            : order
+            : item
         )
       );
     } catch (error) {
@@ -98,6 +169,30 @@ function AdminOrders() {
       alert(
         "Unable to update order status."
       );
+    }
+  };
+
+  // ======================================================
+  // STATUS LABEL
+  // ======================================================
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case "confirmed":
+        return "Accepted";
+
+      case "processing":
+        return "Processing";
+
+      case "delivered":
+        return "Delivered";
+
+      case "cancelled":
+        return "Cancelled";
+
+      case "new":
+      default:
+        return "Order Placed";
     }
   };
 
@@ -128,6 +223,9 @@ function AdminOrders() {
       case "confirmed":
         return "bg-blue-100 text-blue-700";
 
+      case "new":
+        return "bg-orange-100 text-orange-700";
+
       case "processing":
         return "bg-yellow-100 text-yellow-700";
 
@@ -141,6 +239,44 @@ function AdminOrders() {
         return "bg-gray-100 text-gray-700";
     }
   };
+
+  // ======================================================
+  // FILTER ORDERS
+  // ======================================================
+
+  const filteredOrders = useMemo(() => {
+    const term = search.trim().toLowerCase();
+
+    return orders.filter((order) => {
+      const matchesStatus =
+        statusFilter === "all" ||
+        (order.status || "new") === statusFilter;
+
+      if (!matchesStatus) {
+        return false;
+      }
+
+      if (!term) {
+        return true;
+      }
+
+      const searchable = [
+        order.id,
+        order.userId,
+        order.customerId,
+        order.customer?.uid,
+        order.customer?.name,
+        order.customer?.phone,
+        order.customer?.address,
+      ]
+        .map((value) =>
+          String(value || "").toLowerCase()
+        )
+        .join(" ");
+
+      return searchable.includes(term);
+    });
+  }, [orders, search, statusFilter]);
 
   // ======================================================
   // LOADING
@@ -217,6 +353,51 @@ function AdminOrders() {
         </div>
 
         {/* ==================================================
+            SEARCH + FILTER
+        ================================================== */}
+
+        <div className="mt-8 flex flex-col gap-3 bg-white p-4 shadow-sm md:flex-row">
+
+          <input
+            type="text"
+            value={search}
+            onChange={(e) =>
+              setSearch(e.target.value)
+            }
+            placeholder="Search order ID, customer, phone or User ID..."
+            className="min-w-0 flex-1 border border-gray-200 px-4 py-3 text-sm outline-none focus:border-[#8B2E2E]"
+          />
+
+          <select
+            value={statusFilter}
+            onChange={(e) =>
+              setStatusFilter(e.target.value)
+            }
+            className="border border-gray-200 bg-white px-4 py-3 text-sm font-medium outline-none focus:border-[#8B2E2E]"
+          >
+            <option value="all">
+              All Statuses
+            </option>
+            <option value="new">
+              Order Placed
+            </option>
+            <option value="confirmed">
+              Accepted
+            </option>
+            <option value="processing">
+              Processing
+            </option>
+            <option value="delivered">
+              Delivered
+            </option>
+            <option value="cancelled">
+              Cancelled
+            </option>
+          </select>
+
+        </div>
+
+        {/* ==================================================
             EMPTY
         ================================================== */}
 
@@ -242,7 +423,22 @@ function AdminOrders() {
 
           <div className="mt-10 space-y-5">
 
-            {orders.map((order) => (
+            {!filteredOrders.length && (
+              <div className="bg-white px-6 py-14 text-center shadow-sm">
+                <Package
+                  size={45}
+                  className="mx-auto text-gray-300"
+                />
+                <h2 className="mt-4 font-bold text-[#2B1714]">
+                  No matching orders
+                </h2>
+                <p className="mt-2 text-sm text-gray-500">
+                  Try a different search or status filter.
+                </p>
+              </div>
+            )}
+
+            {filteredOrders.map((order) => (
 
               <div
                 key={order.id}
@@ -301,11 +497,11 @@ function AdminOrders() {
                       >
 
                         <option value="new">
-                          New
+                          Order Placed
                         </option>
 
                         <option value="confirmed">
-                          Confirmed
+                          Accepted
                         </option>
 
                         <option value="processing">
@@ -321,6 +517,13 @@ function AdminOrders() {
                         </option>
 
                       </select>
+
+                      <p className="mt-1 text-center text-[10px] text-gray-400">
+                        Customer sees:{" "}
+                        {getStatusLabel(
+                          order.status || "new"
+                        )}
+                      </p>
 
                       <ChevronDown
                         size={14}
@@ -353,6 +556,17 @@ function AdminOrders() {
                       {order.customer?.name ||
                         "Not provided"}
                     </p>
+
+                    {(order.userId ||
+                      order.customer?.uid ||
+                      order.customerId) && (
+                      <p className="mt-1 break-all font-mono text-[11px] text-gray-400">
+                        Customer ID:{" "}
+                        {order.userId ||
+                          order.customer?.uid ||
+                          order.customerId}
+                      </p>
+                    )}
 
                     <div className="mt-3 flex gap-2 text-sm text-gray-500">
 

@@ -7,10 +7,12 @@ import {
   XCircle,
   Minus,
   Plus,
+  Heart,
 } from "lucide-react";
 
 import { useCart } from "../context/CartContext";
 import { useOffers } from "../context/OfferContext";
+import { useWishlist } from "../context/WishlistContext";
 
 function ProductCard({ product }) {
   const {
@@ -27,6 +29,11 @@ function ProductCard({ product }) {
   const {
     activeOffer: offer,
   } = useOffers();
+
+  const {
+    isInWishlist,
+    toggleWishlist,
+  } = useWishlist();
 
   // ======================================================
   // FIND CURRENT CART ITEM
@@ -188,6 +195,43 @@ function ProductCard({ product }) {
                 : ""
             }`}
           />
+
+          {/* ==================================================
+              WISHLIST
+          ================================================== */}
+
+          <button
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              toggleWishlist(product);
+            }}
+            className={`absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full shadow-md transition ${
+              isInWishlist(product.id)
+                ? "bg-[#8B2E2E] text-white"
+                : "bg-white/95 text-[#6B1E1E] hover:bg-[#6B1E1E] hover:text-white"
+            }`}
+            aria-label={
+              isInWishlist(product.id)
+                ? "Remove from wishlist"
+                : "Add to wishlist"
+            }
+            title={
+              isInWishlist(product.id)
+                ? "Remove from wishlist"
+                : "Add to wishlist"
+            }
+          >
+            <Heart
+              size={19}
+              fill={
+                isInWishlist(product.id)
+                  ? "currentColor"
+                  : "none"
+              }
+            />
+          </button>
 
           {/* OFFER BADGE */}
 

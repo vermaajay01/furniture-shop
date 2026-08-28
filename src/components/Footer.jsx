@@ -48,7 +48,59 @@ function Footer() {
 
     footerDescription:
       "Beautifully crafted furniture designed to bring comfort, elegance and lasting quality to your home.",
+
+    themeId: "classic-maroon",
   });
+
+  // ======================================================
+  // THEME COLORS
+  // ======================================================
+
+  const themes = {
+    "classic-maroon": {
+      background: "#2B1714",
+      accent: "#8B2E2E",
+      accentDark: "#6B1E1E",
+      gold: "#E0B66B",
+      goldSoft: "#B8863B",
+    },
+
+    "forest-green": {
+      background: "#193B2A",
+      accent: "#3E7658",
+      accentDark: "#315C46",
+      gold: "#C2A15A",
+      goldSoft: "#A8894D",
+    },
+
+    "royal-navy": {
+      background: "#172B43",
+      accent: "#31577F",
+      accentDark: "#243B5A",
+      gold: "#C7A65A",
+      goldSoft: "#A88945",
+    },
+
+    "walnut-brown": {
+      background: "#382318",
+      accent: "#765039",
+      accentDark: "#5A3928",
+      gold: "#C19A63",
+      goldSoft: "#A57F4F",
+    },
+
+    "modern-charcoal": {
+      background: "#20242A",
+      accent: "#464D57",
+      accentDark: "#30343B",
+      gold: "#C5A66A",
+      goldSoft: "#A88D58",
+    },
+  };
+
+  const activeTheme =
+    themes[settings.themeId] ||
+    themes["classic-maroon"];
 
   // ======================================================
   // LOAD WEBSITE SETTINGS
@@ -115,7 +167,21 @@ function Footer() {
   // ======================================================
 
   return (
-    <footer className="bg-[#2B1714] text-white">
+    <footer
+      className="text-white"
+      style={{
+        backgroundColor:
+          activeTheme.background,
+        "--footer-accent":
+          activeTheme.accent,
+        "--footer-accent-dark":
+          activeTheme.accentDark,
+        "--footer-gold":
+          activeTheme.gold,
+        "--footer-gold-soft":
+          activeTheme.goldSoft,
+      }}
+    >
 
       {/* ==================================================
           MAIN FOOTER
@@ -133,7 +199,12 @@ function Footer() {
 
             <h2 className="text-3xl font-bold">
               हरि{" "}
-              <span className="text-[#E0B66B]">
+              <span
+                style={{
+                  color:
+                    "var(--footer-gold)",
+                }}
+              >
                 ॐ
               </span>
             </h2>
@@ -167,7 +238,31 @@ function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram"
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white/60 transition hover:border-[#E0B66B] hover:bg-[#E0B66B]/10 hover:text-[#E0B66B]"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white/60 transition"
+                  style={{
+                    "--tw-hover-border-color":
+                      activeTheme.gold,
+                  }}
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.borderColor =
+                      activeTheme.gold;
+
+                    event.currentTarget.style.color =
+                      activeTheme.gold;
+
+                    event.currentTarget.style.backgroundColor =
+                      `${activeTheme.gold}18`;
+                  }}
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.borderColor =
+                      "rgba(255,255,255,0.1)";
+
+                    event.currentTarget.style.color =
+                      "rgba(255,255,255,0.6)";
+
+                    event.currentTarget.style.backgroundColor =
+                      "transparent";
+                  }}
                 >
                   <FaInstagram
                     size={18}
@@ -185,7 +280,27 @@ function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Facebook"
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white/60 transition hover:border-[#E0B66B] hover:bg-[#E0B66B]/10 hover:text-[#E0B66B]"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white/60 transition"
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.borderColor =
+                      activeTheme.gold;
+
+                    event.currentTarget.style.color =
+                      activeTheme.gold;
+
+                    event.currentTarget.style.backgroundColor =
+                      `${activeTheme.gold}18`;
+                  }}
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.borderColor =
+                      "rgba(255,255,255,0.1)";
+
+                    event.currentTarget.style.color =
+                      "rgba(255,255,255,0.6)";
+
+                    event.currentTarget.style.backgroundColor =
+                      "transparent";
+                  }}
                 >
                   <FaFacebookF
                     size={17}
@@ -201,7 +316,27 @@ function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="WhatsApp"
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white/60 transition hover:border-[#E0B66B] hover:bg-[#E0B66B]/10 hover:text-[#E0B66B]"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white/60 transition"
+                  onMouseEnter={(event) => {
+                    event.currentTarget.style.borderColor =
+                      activeTheme.gold;
+
+                    event.currentTarget.style.color =
+                      activeTheme.gold;
+
+                    event.currentTarget.style.backgroundColor =
+                      `${activeTheme.gold}18`;
+                  }}
+                  onMouseLeave={(event) => {
+                    event.currentTarget.style.borderColor =
+                      "rgba(255,255,255,0.1)";
+
+                    event.currentTarget.style.color =
+                      "rgba(255,255,255,0.6)";
+
+                    event.currentTarget.style.backgroundColor =
+                      "transparent";
+                  }}
                 >
                   <FaWhatsapp
                     size={19}
@@ -220,7 +355,13 @@ function Footer() {
 
         <div>
 
-          <h3 className="text-lg font-semibold text-[#E0B66B]">
+          <h3
+            className="text-lg font-semibold"
+            style={{
+              color:
+                "var(--footer-gold)",
+            }}
+          >
             Quick Links
           </h3>
 
@@ -278,7 +419,13 @@ function Footer() {
 
         <div>
 
-          <h3 className="text-lg font-semibold text-[#E0B66B]">
+          <h3
+            className="text-lg font-semibold"
+            style={{
+              color:
+                "var(--footer-gold)",
+            }}
+          >
             Furniture
           </h3>
 
@@ -336,7 +483,13 @@ function Footer() {
 
         <div>
 
-          <h3 className="text-lg font-semibold text-[#E0B66B]">
+          <h3
+            className="text-lg font-semibold"
+            style={{
+              color:
+                "var(--footer-gold)",
+            }}
+          >
             Contact Us
           </h3>
 
@@ -349,7 +502,11 @@ function Footer() {
 
                 <MapPin
                   size={20}
-                  className="mt-1 shrink-0 text-[#E0B66B]"
+                  className="mt-1 shrink-0"
+                  style={{
+                    color:
+                      "var(--footer-gold)",
+                  }}
                 />
 
                 <div>
@@ -368,7 +525,13 @@ function Footer() {
                         {settings.address}
                       </p>
 
-                      <span className="mt-1 inline-flex items-center gap-1 text-xs text-[#E0B66B]">
+                      <span
+                        className="mt-1 inline-flex items-center gap-1 text-xs"
+                        style={{
+                          color:
+                            "var(--footer-gold)",
+                        }}
+                      >
                         Open in Google Maps
 
                         <ExternalLink
@@ -395,7 +558,11 @@ function Footer() {
 
                 <Phone
                   size={19}
-                  className="shrink-0 text-[#E0B66B]"
+                  className="shrink-0"
+                  style={{
+                    color:
+                      "var(--footer-gold)",
+                  }}
                 />
 
                 <a
@@ -419,7 +586,11 @@ function Footer() {
 
                 <FaWhatsapp
                   size={19}
-                  className="shrink-0 text-[#E0B66B]"
+                  className="shrink-0"
+                  style={{
+                    color:
+                      "var(--footer-gold)",
+                  }}
                 />
 
                 <a
@@ -441,7 +612,11 @@ function Footer() {
 
                 <Mail
                   size={19}
-                  className="shrink-0 text-[#E0B66B]"
+                  className="shrink-0"
+                  style={{
+                    color:
+                      "var(--footer-gold)",
+                  }}
                 />
 
                 <a
@@ -461,7 +636,11 @@ function Footer() {
 
                 <Clock
                   size={19}
-                  className="mt-0.5 shrink-0 text-[#E0B66B]"
+                  className="mt-0.5 shrink-0"
+                  style={{
+                    color:
+                      "var(--footer-gold)",
+                  }}
                 />
 
                 <p className="leading-6">
@@ -481,7 +660,13 @@ function Footer() {
           BOTTOM FOOTER
       ================================================== */}
 
-      <div className="border-t border-white/10">
+      <div
+        className="border-t"
+        style={{
+          borderColor:
+            "rgba(255,255,255,0.1)",
+        }}
+      >
 
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-6 py-6 text-sm text-white/40 md:flex-row">
 

@@ -9,6 +9,7 @@ import {
   doc,
   getDoc,
   setDoc,
+  deleteDoc,
 } from "firebase/firestore";
 
 import {
@@ -26,6 +27,7 @@ import {
   ShoppingBag,
   Palette,
   Check,
+  X,
 } from "lucide-react";
 
 import { db } from "../../firebase/firebase";
@@ -34,9 +36,16 @@ function AdminDashboard() {
   const [visitorCount, setVisitorCount] = useState(0);
   const [todayVisitors, setTodayVisitors] = useState(0);
   const [monthVisitors, setMonthVisitors] = useState(0);
+  const [todayUsers, setTodayUsers] = useState([]);
+  const [showTodayUsers, setShowTodayUsers] = useState(false);
+  const [deletingVisitors, setDeletingVisitors] = useState(false);
+  const [visitorDeleteMessage, setVisitorDeleteMessage] =
+    useState("");
 
   const [productCount, setProductCount] = useState(0);
   const [requestCount, setRequestCount] = useState(0);
+
+  const [customerCount, setCustomerCount] = useState(0);
 
   const [orderCount, setOrderCount] = useState(0);
   const [newOrderCount, setNewOrderCount] = useState(0);
@@ -234,146 +243,389 @@ function AdminDashboard() {
   };
 
   // ======================================================
-  // VISITOR STATISTICS
+  // WEBSITE ANALYTICS
   // ======================================================
 
   useEffect(() => {
-    const visitorsRef = collection(
+    const analyticsRef = collection(
       db,
-      "visitors"
+      "visitorAnalytics"
     );
 
     const unsubscribe = onSnapshot(
-      visitorsRef,
+      analyticsRef,
       (snapshot) => {
-        const visitors = snapshot.docs.map(
-          (item) => ({
+        const analyticsUsers =
+          snapshot.docs.map((item) => ({
             id: item.id,
             ...item.data(),
-          })
-        );
+          }));
 
         const today = getToday();
         const currentMonth = getCurrentMonth();
 
         // ==================================================
-        // UNIQUE VISITORS
+        // TODAY'S USERS
         // ==================================================
 
-        const uniqueVisitors = new Map();
+        const todayList =
+          analyticsUsers
+            .filter(
+              (user) =>
+                user.date === today
+            )
+            .sort((a, b) => {
+              const timeA =
+                a.lastVisitAt?.toMillis?.() ||
+                a.firstVisitAt?.toMillis?.() ||
+                0;
 
-        visitors.forEach((visitor) => {
-          const visitorId =
-            visitor.visitorId;
+              const timeB =
+                b.lastVisitAt?.toMillis?.() ||
+                b.firstVisitAt?.toMillis?.() ||
+                0;
 
-          if (!visitorId) {
-            return;
-          }
-
-          const existing =
-            uniqueVisitors.get(
-              visitorId
-            );
-
-          if (!existing) {
-            uniqueVisitors.set(
-              visitorId,
-              visitor
-            );
-            return;
-          }
-
-          const existingDate =
-            existing.lastVisitDate ||
-            existing.date ||
-            "";
-
-          const currentDate =
-            visitor.lastVisitDate ||
-            visitor.date ||
-            "";
-
-          if (
-            currentDate >
-            existingDate
-          ) {
-            uniqueVisitors.set(
-              visitorId,
-              visitor
-            );
-          }
-        });
-
-        const uniqueVisitorList =
-          Array.from(
-            uniqueVisitors.values()
-          );
-
-        // ==================================================
-        // TODAY
-        // ==================================================
-
-        const todayCount =
-          uniqueVisitorList.filter(
-            (visitor) => {
-              const lastVisit =
-                visitor.lastVisitDate ||
-                visitor.date ||
-                "";
-
-              return (
-                lastVisit === today
-              );
-            }
-          ).length;
+              return timeB - timeA;
+            });
 
         // ==================================================
         // THIS MONTH
         // ==================================================
 
         const monthCount =
-          uniqueVisitorList.filter(
-            (visitor) => {
-              const lastVisit =
-                visitor.lastVisitDate ||
-                visitor.date ||
-                "";
-
-              return (
-                lastVisit.startsWith(
-                  currentMonth
-                )
-              );
-            }
+          analyticsUsers.filter(
+            (user) =>
+              typeof user.date === "string" &&
+              user.date.startsWith(
+                currentMonth
+              )
           ).length;
 
         // ==================================================
-        // UPDATE DASHBOARD
+        // DASHBOARD COUNTS
         // ==================================================
 
+        setTodayUsers(todayList);
+        setTodayVisitors(todayList.length);
+
+        setMonthVisitors(monthCount);
+
         setVisitorCount(
-          uniqueVisitorList.length
-        );
-
-        setTodayVisitors(
-          todayCount
-        );
-
-        setMonthVisitors(
-          monthCount
+          analyticsUsers.length
         );
       },
       (error) => {
         console.error(
-          "Visitor statistics error:",
+          "Website analytics error:",
           error
         );
       }
     );
 
-    return () =>
-      unsubscribe();
+    return () => unsubscribe();
   }, []);
+
+  // ======================================================
+  // FORMAT ANALYTICS TIME
+  // ======================================================
+
+  const formatAnalyticsTime = (
+    timestamp
+  ) => {
+    if (!timestamp) {
+      return "—";
+    }
+
+    try {
+      return timestamp
+        .toDate()
+        .toLocaleString(
+          "en-IN",
+          {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+          }
+        );
+    } catch {
+      return "—";
+    }
+  };
+
+  // ======================================================
+  // ANALYTICS TABLE
+  // ======================================================
+
+  const TodayUsersTable = () => {
+    if (!showTodayUsers) {
+      return null;
+    }
+
+    return (
+      <section className="mt-8 bg-white shadow-sm">
+        <div className="flex flex-col gap-4 border-b border-gray-100 p-6 sm:flex-row sm:items-center sm:justify-between">
+
+          <div>
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-[#B8863B]">
+              Website Analytics
+            </p>
+
+            <h2 className="mt-1 text-2xl font-bold text-[#6B1E1E]">
+              Today's Users
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              {todayUsers.length.toLocaleString("en-IN")} unique
+              anonymous users recorded today.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() =>
+              setShowTodayUsers(false)
+            }
+            className="flex w-fit items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 transition hover:bg-gray-50"
+          >
+            <X size={17} />
+            Close
+          </button>
+
+        </div>
+
+        <div className="overflow-x-auto">
+          {todayUsers.length === 0 ? (
+            <div className="p-12 text-center">
+              <Users
+                size={38}
+                className="mx-auto text-gray-300"
+              />
+
+              <p className="mt-4 font-semibold text-gray-600">
+                No users recorded today
+              </p>
+
+              <p className="mt-1 text-sm text-gray-400">
+                New visitors will appear here when analytics
+                tracking records them.
+              </p>
+            </div>
+          ) : (
+            <table className="min-w-[1500px] w-full text-left text-sm">
+              <thead className="bg-[#F8F1E7] text-xs uppercase tracking-wider text-gray-500">
+                <tr>
+                  <th className="px-4 py-4 font-semibold">
+                    Time
+                  </th>
+
+                  <th className="px-4 py-4 font-semibold">
+                    User ID
+                  </th>
+
+                  <th className="px-4 py-4 font-semibold">
+                    City
+                  </th>
+
+                  <th className="px-4 py-4 font-semibold">
+                    Region
+                  </th>
+
+                  <th className="px-4 py-4 font-semibold">
+                    Country
+                  </th>
+
+                  <th className="px-4 py-4 font-semibold">
+                    Device
+                  </th>
+
+                  <th className="px-4 py-4 font-semibold">
+                    Browser
+                  </th>
+
+                  <th className="px-4 py-4 font-semibold">
+                    OS
+                  </th>
+
+                  <th className="px-4 py-4 font-semibold">
+                    Screen
+                  </th>
+
+                  <th className="px-4 py-4 font-semibold">
+                    First Page
+                  </th>
+
+                  <th className="px-4 py-4 font-semibold">
+                    Last Page
+                  </th>
+
+                  <th className="px-4 py-4 font-semibold">
+                    Source
+                  </th>
+
+                  <th className="px-4 py-4 font-semibold">
+                    Visits
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-gray-100">
+                {todayUsers.map((user) => (
+                  <tr
+                    key={user.id}
+                    className="transition hover:bg-[#F8F1E7]/60"
+                  >
+                    <td className="whitespace-nowrap px-4 py-4 text-gray-600">
+                      {formatAnalyticsTime(
+                        user.lastVisitAt ||
+                          user.firstVisitAt
+                      )}
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <span className="font-mono text-xs text-[#6B1E1E]">
+                        {user.visitorId || user.id}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-4 font-medium text-gray-700">
+                      {user.city || "—"}
+                    </td>
+
+                    <td className="px-4 py-4 text-gray-600">
+                      {user.region || "—"}
+                    </td>
+
+                    <td className="px-4 py-4 text-gray-600">
+                      {user.country || "—"}
+                    </td>
+
+                    <td className="px-4 py-4 font-medium text-gray-700">
+                      {user.deviceType || "—"}
+                    </td>
+
+                    <td className="px-4 py-4 text-gray-600">
+                      {user.browser || "—"}
+                    </td>
+
+                    <td className="px-4 py-4 text-gray-600">
+                      {user.operatingSystem || "—"}
+                    </td>
+
+                    <td className="px-4 py-4 text-gray-600">
+                      {user.screenResolution || "—"}
+                    </td>
+
+                    <td className="max-w-[180px] truncate px-4 py-4 text-gray-600">
+                      {user.firstPage || "—"}
+                    </td>
+
+                    <td className="max-w-[180px] truncate px-4 py-4 text-gray-600">
+                      {user.lastPage || "—"}
+                    </td>
+
+                    <td className="max-w-[160px] truncate px-4 py-4 text-gray-600">
+                      {user.trafficSource || "—"}
+                    </td>
+
+                    <td className="px-4 py-4 font-semibold text-[#6B1E1E]">
+                      {Number(
+                        user.visitCount || 0
+                      ).toLocaleString("en-IN")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </section>
+    );
+  };
+
+  // ======================================================
+  // DELETE OLD VISITOR DATA
+  //
+  // Deletes only the legacy "visitors" collection.
+  // The new "visitorAnalytics" collection is untouched.
+  // ======================================================
+
+  const handleDeleteOldVisitorData = async () => {
+    if (deletingVisitors) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Delete all old visitor data?\n\n" +
+        "This will permanently delete records from the legacy " +
+        '"visitors" collection only.\n\n' +
+        "Your new visitorAnalytics data, orders, products, " +
+        "requests and other website data will NOT be deleted."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingVisitors(true);
+      setVisitorDeleteMessage("");
+
+      const visitorsRef = collection(
+        db,
+        "visitors"
+      );
+
+      const snapshot = await new Promise(
+        (resolve, reject) => {
+          const unsubscribe = onSnapshot(
+            visitorsRef,
+            (currentSnapshot) => {
+              unsubscribe();
+              resolve(currentSnapshot);
+            },
+            (error) => {
+              unsubscribe();
+              reject(error);
+            }
+          );
+        }
+      );
+
+      if (snapshot.empty) {
+        setVisitorDeleteMessage(
+          "No old visitor data was found."
+        );
+        return;
+      }
+
+      await Promise.all(
+        snapshot.docs.map((visitorDoc) =>
+          deleteDoc(visitorDoc.ref)
+        )
+      );
+
+      setVisitorDeleteMessage(
+        `${snapshot.size.toLocaleString(
+          "en-IN"
+        )} old visitor record${
+          snapshot.size === 1 ? "" : "s"
+        } deleted successfully.`
+      );
+    } catch (error) {
+      console.error(
+        "Unable to delete old visitor data:",
+        error
+      );
+
+      setVisitorDeleteMessage(
+        "Unable to delete old visitor data. Please try again."
+      );
+    } finally {
+      setDeletingVisitors(false);
+    }
+  };
 
   // ======================================================
   // PRODUCT COUNT
@@ -423,6 +675,34 @@ function AdminDashboard() {
       (error) => {
         console.error(
           "Request count error:",
+          error
+        );
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  // ======================================================
+  // CUSTOMER COUNT
+  // ======================================================
+
+  useEffect(() => {
+    const usersRef = collection(
+      db,
+      "users"
+    );
+
+    const unsubscribe = onSnapshot(
+      usersRef,
+      (snapshot) => {
+        setCustomerCount(
+          snapshot.size
+        );
+      },
+      (error) => {
+        console.error(
+          "Customer count error:",
           error
         );
       }
@@ -654,7 +934,7 @@ function AdminDashboard() {
 
         <p className="mt-2 text-gray-500">
           Monitor your furniture store,
-          visitors, products and
+          users, products and
           customer orders.
         </p>
 
@@ -667,26 +947,34 @@ function AdminDashboard() {
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
 
         <StatCard
-          title="Total Visitors"
+          title="Recorded Users"
           value={visitorCount}
           icon={Users}
-          description="All recorded visitors"
+          description="All recorded analytics records"
           iconClass="bg-[#F5E4E4] text-[#8B2E2E]"
         />
 
-        <StatCard
-          title="Today's Visitors"
-          value={todayVisitors}
-          icon={CalendarDays}
-          description="Visitors today"
-          iconClass="bg-[#F4EBD9] text-[#9A6B43]"
-        />
+        <button
+          type="button"
+          onClick={() =>
+            setShowTodayUsers(true)
+          }
+          className="text-left"
+        >
+          <StatCard
+            title="Today's Users"
+            value={todayVisitors}
+            icon={CalendarDays}
+            description="Click to view today's users"
+            iconClass="bg-[#F4EBD9] text-[#9A6B43]"
+          />
+        </button>
 
         <StatCard
-          title="This Month"
+          title="This Month's Users"
           value={monthVisitors}
           icon={CalendarRange}
-          description="Visitors this month"
+          description="Users recorded this month"
           iconClass="bg-[#E8EFE5] text-green-700"
         />
 
@@ -698,7 +986,72 @@ function AdminDashboard() {
           iconClass="bg-[#E7EAF2] text-blue-700"
         />
 
+        <StatCard
+          title="Customers"
+          value={customerCount}
+          icon={Users}
+          description="Registered customer accounts"
+          iconClass="bg-[#E8EFE5] text-green-700"
+        />
+
       </div>
+
+      {/* ==================================================
+          LEGACY VISITOR DATA
+      ================================================== */}
+
+      <section className="mt-8 bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+
+          <div>
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-[#B8863B]">
+              Visitor Data
+            </p>
+
+            <h2 className="mt-1 text-xl font-bold text-[#6B1E1E]">
+              Legacy Visitor Records
+            </h2>
+
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-500">
+              The old visitor collection is no longer used by the new
+              analytics system. Delete these old records to start fresh.
+              This does not affect the new visitorAnalytics data.
+            </p>
+
+            {visitorDeleteMessage && (
+              <p
+                className={`mt-3 text-sm font-medium ${
+                  visitorDeleteMessage.includes(
+                    "successfully"
+                  ) || visitorDeleteMessage.includes(
+                    "No old"
+                  )
+                    ? "text-green-700"
+                    : "text-red-600"
+                }`}
+              >
+                {visitorDeleteMessage}
+              </p>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleDeleteOldVisitorData}
+            disabled={deletingVisitors}
+            className="flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-[#8B2E2E] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#6B1E1E] disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
+          >
+            <X size={17} />
+
+            {deletingVisitors
+              ? "Deleting..."
+              : "Delete Old Visitor Data"}
+          </button>
+
+        </div>
+      </section>
+
+      <TodayUsersTable />
 
       {/* ==================================================
           ORDER STATISTICS
@@ -884,6 +1237,35 @@ function AdminDashboard() {
               className="transition group-hover:translate-x-1"
             />
 
+          </Link>
+
+          {/* CUSTOMERS */}
+
+          <Link
+            to="/admin/customers"
+            className="group flex items-center justify-between bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div className="flex items-center gap-4">
+              <Users
+                size={25}
+                className="text-[#8B2E2E]"
+              />
+
+              <div>
+                <p className="font-semibold text-[#6B1E1E]">
+                  Customers
+                </p>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  View registered users
+                </p>
+              </div>
+            </div>
+
+            <ArrowRight
+              size={20}
+              className="text-[#8B2E2E]"
+            />
           </Link>
 
           {/* ORDERS */}

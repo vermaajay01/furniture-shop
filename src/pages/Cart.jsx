@@ -26,6 +26,7 @@ import {
 
 import { db } from "../firebase/firebase";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 
 const WEBSITE_URL =
   "https://hariomfurniturehouse.netlify.app";
@@ -39,6 +40,8 @@ function Cart() {
     removeFromCart,
     clearCart,
   } = useCart();
+
+  const { user, profile } = useAuth();
 
   const [settings, setSettings] =
     useState({
@@ -89,6 +92,32 @@ function Cart() {
 
     loadSettings();
   }, []);
+
+  // ======================================================
+  // LOAD LOGGED-IN CUSTOMER DETAILS
+  // ======================================================
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    setCustomer((previous) => ({
+      ...previous,
+      name:
+        previous.name ||
+        profile?.name ||
+        user.displayName ||
+        "",
+      phone:
+        previous.phone ||
+        profile?.mobile ||
+        "",
+    }));
+  }, [
+    user,
+    profile,
+  ]);
 
   // ======================================================
   // CUSTOMER DETAILS
@@ -262,6 +291,18 @@ function Cart() {
     }
 
     // ==================================================
+    // CUSTOMER LOGIN REQUIRED
+    // ==================================================
+
+    if (!user) {
+      alert(
+        "Please login or create an account before placing an order."
+      );
+
+      return;
+    }
+
+    // ==================================================
     // CUSTOMER VALIDATION
     // ==================================================
 
@@ -372,12 +413,23 @@ function Cart() {
       // ==================================================
 
       const orderData = {
+        // Firebase Auth UID links this order to the
+        // logged-in customer for My Orders.
+        userId:
+          user.uid,
+
         customer: {
+          uid:
+            user.uid,
+
           name:
             customer.name.trim(),
 
           phone:
             customer.phone.trim(),
+
+          email:
+            user.email || "",
 
           address:
             customer.address.trim(),
@@ -966,6 +1018,25 @@ Thank you.`;
               Order Details
             </h2>
 
+            {!user && (
+              <div className="mt-5 border border-[#B8863B]/30 bg-[#F8F1E7] p-4 text-sm text-gray-600">
+                <p className="font-semibold text-[#6B1E1E]">
+                  Login required to place an order
+                </p>
+
+                <p className="mt-1">
+                  Your order history and notifications will be saved to your account.
+                </p>
+
+                <Link
+                  to="/login"
+                  className="mt-3 inline-flex font-semibold text-[#8B2E2E] hover:underline"
+                >
+                  Login / Create Account →
+                </Link>
+              </div>
+            )}
+
             <form
               onSubmit={
                 sendOrderToWhatsApp
@@ -1132,6 +1203,8 @@ Thank you.`;
                   ? "Saving Order..."
                   : hasStockIssue
                   ? "Update Stock First"
+                  : !user
+                  ? "Login to Place Order"
                   : "Send Order on WhatsApp"}
 
               </button>

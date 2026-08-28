@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useWishlist } from "../context/WishlistContext";
 
 import {
   ArrowLeft,
@@ -12,6 +13,7 @@ import {
   XCircle,
   Share2,
   Check,
+  Heart,
 } from "lucide-react";
 
 import {
@@ -25,6 +27,11 @@ import { db } from "../firebase/firebase";
 
 function ProductDetails() {
   const { id } = useParams();
+
+  const {
+    isInWishlist,
+    toggleWishlist,
+  } = useWishlist();
 
   const [product, setProduct] =
     useState(null);
@@ -469,6 +476,14 @@ function ProductDetails() {
   };
 
   // ======================================================
+  // WISHLIST
+  // ======================================================
+
+  const handleWishlist = async () => {
+    await toggleWishlist(product);
+  };
+
+  // ======================================================
   // WHATSAPP MESSAGE
   // ======================================================
 
@@ -836,7 +851,37 @@ Thank you.
                   SHARE + WHATSAPP
               ================================================== */}
 
-              <div className="mt-8 grid gap-3 sm:grid-cols-2">
+              <div className="mt-8 grid gap-3 sm:grid-cols-3">
+
+                {/* WISHLIST */}
+
+                <button
+                  type="button"
+                  onClick={handleWishlist}
+                  className={`flex items-center justify-center gap-2 border px-5 py-4 font-semibold transition ${
+                    isInWishlist(product.id)
+                      ? "border-[#8B2E2E] bg-[#8B2E2E] text-white"
+                      : "border-[#6B1E1E] bg-white text-[#6B1E1E] hover:bg-[#6B1E1E] hover:text-white"
+                  }`}
+                  aria-label={
+                    isInWishlist(product.id)
+                      ? "Remove from wishlist"
+                      : "Add to wishlist"
+                  }
+                >
+                  <Heart
+                    size={21}
+                    fill={
+                      isInWishlist(product.id)
+                        ? "currentColor"
+                        : "none"
+                    }
+                  />
+
+                  {isInWishlist(product.id)
+                    ? "Wishlisted"
+                    : "Wishlist"}
+                </button>
 
                 {/* SHARE */}
 

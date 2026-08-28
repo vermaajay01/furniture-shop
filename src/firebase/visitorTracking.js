@@ -3,16 +3,27 @@ import {
   getDoc,
   setDoc,
   serverTimestamp,
+  increment,
 } from "firebase/firestore";
 
 import { db } from "./firebase";
 
 // ======================================================
-// STORAGE KEYS
+// STORAGE KEY
 // ======================================================
 
 const VISITOR_ID_KEY =
   "hari_om_visitor_id";
+
+// ======================================================
+// LOCATION API
+//
+// IP-based location is approximate and may be affected by
+// VPNs, mobile networks, proxies, or ISP routing.
+// ======================================================
+
+const LOCATION_API =
+  "https://ipapi.co/json/";
 
 // ======================================================
 // GET DEVICE TYPE
@@ -73,6 +84,41 @@ function getBrowser() {
 }
 
 // ======================================================
+// GET OPERATING SYSTEM
+// ======================================================
+
+function getOperatingSystem() {
+  const userAgent =
+    navigator.userAgent;
+
+  if (/Windows NT/i.test(userAgent)) {
+    return "Windows";
+  }
+
+  if (/Android/i.test(userAgent)) {
+    return "Android";
+  }
+
+  if (
+    /iPhone|iPad|iPod/i.test(
+      userAgent
+    )
+  ) {
+    return "iOS";
+  }
+
+  if (/Mac OS X/i.test(userAgent)) {
+    return "macOS";
+  }
+
+  if (/Linux/i.test(userAgent)) {
+    return "Linux";
+  }
+
+  return "Other";
+}
+
+// ======================================================
 // GET VISITOR ID
 // ======================================================
 
@@ -96,7 +142,7 @@ function getVisitorId() {
 }
 
 // ======================================================
-// GET TODAY
+// GET DATE
 // ======================================================
 
 function getToday() {
@@ -117,6 +163,100 @@ function getToday() {
 }
 
 // ======================================================
+// GET TRAFFIC SOURCE
+// ======================================================
+
+function getTrafficSource() {
+  const referrer =
+    document.referrer;
+
+  if (!referrer) {
+    return "Direct";
+  }
+
+  try {
+    const url =
+      new URL(referrer);
+
+    const currentHost =
+      window.location.hostname;
+
+    if (
+      url.hostname ===
+      currentHost
+    ) {
+      return "Internal";
+    }
+
+    return url.hostname;
+  } catch {
+    return "Other";
+  }
+}
+
+// ======================================================
+// GET APPROXIMATE LOCATION
+// ======================================================
+
+async function getVisitorLocation() {
+  try {
+    const response =
+      await fetch(
+        LOCATION_API,
+        {
+          method: "GET",
+          headers: {
+            Accept:
+              "application/json",
+          },
+        }
+      );
+
+    if (!response.ok) {
+      throw new Error(
+        `Location request failed: ${response.status}`
+      );
+    }
+
+    const data =
+      await response.json();
+
+    return {
+      city:
+        data.city || "Unknown",
+
+      region:
+        data.region || "Unknown",
+
+      country:
+        data.country_name ||
+        data.country ||
+        "Unknown",
+
+      countryCode:
+        data.country_code ||
+        "",
+
+      timezone:
+        data.timezone || "",
+    };
+  } catch (error) {
+    console.warn(
+      "Visitor location unavailable:",
+      error
+    );
+
+    return {
+      city: "Unknown",
+      region: "Unknown",
+      country: "Unknown",
+      countryCode: "",
+      timezone: "",
+    };
+  }
+}
+
+// ======================================================
 // TRACK VISITOR
 // ======================================================
 
@@ -134,41 +274,75 @@ export async function trackVisitor() {
     const browser =
       getBrowser();
 
+    const operatingSystem =
+      getOperatingSystem();
+
+    const screenResolution =
+      `${window.screen.width}x${window.screen.height}`;
+
+    const currentPage =
+      window.location.pathname;
+
+    const trafficSource =
+      getTrafficSource();
+
     // ==================================================
-    // VISITOR DOCUMENT
+    // LOCATION
+    // ==================================================
+
+    const location =
+      await getVisitorLocation();
+
+    // ==================================================
+    // DAILY USER DOCUMENT
     //
-    // Visitor ID itself becomes the document ID.
-    // No collection query is required.
+    // One anonymous user gets one document per day.
     // ==================================================
+
+    const documentId =
+      `${visitorId}_${today}`;
 
     const visitorRef = doc(
       db,
-      "visitors",
-      visitorId
+      "visitorAnalytics",
+      documentId
     );
 
     const visitorSnapshot =
       await getDoc(visitorRef);
 
     // ==================================================
-    // EXISTING VISITOR
+    // EXISTING USER TODAY
     // ==================================================
 
     if (visitorSnapshot.exists()) {
       await setDoc(
         visitorRef,
         {
-          deviceType:
-            deviceType,
-
-          browser:
-            browser,
-
-          lastVisitDate:
-            today,
-
           lastVisitAt:
             serverTimestamp(),
+
+          lastPage:
+            currentPage,
+
+          visitCount:
+            increment(1),
+
+          // Refresh approximate location
+          city:
+            location.city,
+
+          region:
+            location.region,
+
+          country:
+            location.country,
+
+          countryCode:
+            location.countryCode,
+
+          timezone:
+            location.timezone,
         },
         {
           merge: true,
@@ -179,7 +353,7 @@ export async function trackVisitor() {
     }
 
     // ==================================================
-    // NEW UNIQUE VISITOR
+    // NEW USER TODAY
     // ==================================================
 
     await setDoc(
@@ -188,29 +362,59 @@ export async function trackVisitor() {
         visitorId:
           visitorId,
 
+        date:
+          today,
+
         deviceType:
           deviceType,
 
         browser:
           browser,
 
-        firstVisitDate:
-          today,
+        operatingSystem:
+          operatingSystem,
 
-        lastVisitDate:
-          today,
+        screenResolution:
+          screenResolution,
 
-        createdAt:
+        firstPage:
+          currentPage,
+
+        lastPage:
+          currentPage,
+
+        trafficSource:
+          trafficSource,
+
+        city:
+          location.city,
+
+        region:
+          location.region,
+
+        country:
+          location.country,
+
+        countryCode:
+          location.countryCode,
+
+        timezone:
+          location.timezone,
+
+        firstVisitAt:
           serverTimestamp(),
 
         lastVisitAt:
           serverTimestamp(),
+
+        visitCount:
+          1,
       }
     );
 
   } catch (error) {
     console.error(
-      "Visitor tracking failed:",
+      "Visitor analytics failed:",
       error
     );
   }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Link,
   useNavigate,
@@ -11,14 +11,36 @@ import {
   ShoppingCart,
   ShieldCheck,
   ArrowRight,
+  User,
+  Bell,
+  Heart,
 } from "lucide-react";
 
+import {
+  collection,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
+
+import { db } from "../firebase/firebase";
+
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
+import { useWishlist } from "../context/WishlistContext";
 
 function Navbar() {
   const navigate = useNavigate();
 
   const { cartCount } = useCart();
+
+  const { wishlist } = useWishlist();
+
+  const wishlistCount =
+    wishlist.length;
+
+  const [unreadNotificationCount, setUnreadNotificationCount] =
+    useState(0);
 
   const [menuOpen, setMenuOpen] =
     useState(false);
@@ -31,6 +53,70 @@ function Navbar() {
 
   const closeMenu = () => {
     setMenuOpen(false);
+  };
+
+  // ======================================================
+  // CUSTOMER NOTIFICATIONS
+  // ======================================================
+
+  useEffect(() => {
+    if (!user) {
+      setUnreadNotificationCount(0);
+      return;
+    }
+
+    const notificationsQuery = query(
+      collection(
+        db,
+        "customerNotifications"
+      ),
+      where(
+        "userId",
+        "==",
+        user.uid
+      )
+    );
+
+    const unsubscribe =
+      onSnapshot(
+        notificationsQuery,
+        (snapshot) => {
+          const unread =
+            snapshot.docs.filter(
+              (item) =>
+                item.data().read !== true
+            ).length;
+
+          setUnreadNotificationCount(
+            unread
+          );
+        },
+        (error) => {
+          console.error(
+            "Navbar notification listener error:",
+            error
+          );
+
+          setUnreadNotificationCount(0);
+        }
+      );
+
+    return () => unsubscribe();
+  }, [user]);
+
+  const openWishlist = () => {
+    if (user) {
+      navigate("/account/wishlist");
+    } else {
+      navigate("/login");
+    }
+
+    closeMenu();
+  };
+
+  const openNotifications = () => {
+    navigate("/account/notifications");
+    closeMenu();
   };
 
   // ======================================================
@@ -68,6 +154,21 @@ function Navbar() {
 
   const openCart = () => {
     navigate("/cart");
+    closeMenu();
+  };
+
+  // ======================================================
+  // CUSTOMER ACCOUNT / LOGIN
+  // ======================================================
+
+  const openAccount = () => {
+    if (user) {
+      // Customer account page will be added in the next step.
+      navigate("/account");
+    } else {
+      navigate("/login");
+    }
+
     closeMenu();
   };
 
@@ -193,6 +294,73 @@ function Navbar() {
 
           </div>
 
+          {/* CUSTOMER WISHLIST */}
+
+          {user && (
+            <button
+              type="button"
+              onClick={openWishlist}
+              aria-label="Wishlist"
+              title="Wishlist"
+              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[#6B1E1E]/15 text-[#6B1E1E] transition hover:border-[#8B2E2E] hover:bg-[#8B2E2E] hover:text-white"
+            >
+              <Heart
+                size={18}
+                fill="none"
+              />
+
+              {wishlistCount > 0 && (
+                <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#8B2E2E] px-1 text-[10px] font-bold text-white">
+                  {wishlistCount > 99
+                    ? "99+"
+                    : wishlistCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* CUSTOMER NOTIFICATIONS */}
+
+          {user && (
+            <button
+              type="button"
+              onClick={openNotifications}
+              aria-label="Notifications"
+              title="Notifications"
+              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[#6B1E1E]/15 text-[#6B1E1E] transition hover:border-[#8B2E2E] hover:bg-[#8B2E2E] hover:text-white"
+            >
+              <Bell size={18} />
+
+              {unreadNotificationCount > 0 && (
+                <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#8B2E2E] px-1 text-[10px] font-bold text-white">
+                  {unreadNotificationCount > 99
+                    ? "99+"
+                    : unreadNotificationCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* CUSTOMER ACCOUNT / LOGIN */}
+
+          <button
+            type="button"
+            onClick={openAccount}
+            aria-label={
+              user
+                ? "My Account"
+                : "Customer Login"
+            }
+            title={
+              user
+                ? "My Account"
+                : "Login"
+            }
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#6B1E1E]/15 text-[#6B1E1E] transition hover:border-[#8B2E2E] hover:bg-[#8B2E2E] hover:text-white"
+          >
+            <User size={18} />
+          </button>
+
           {/* ADMIN */}
 
           <Link
@@ -245,6 +413,73 @@ function Navbar() {
             )}
 
           </div>
+
+          {/* CUSTOMER WISHLIST */}
+
+          {user && (
+            <button
+              type="button"
+              onClick={openWishlist}
+              aria-label="Wishlist"
+              title="Wishlist"
+              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[#6B1E1E]/15 text-[#6B1E1E] transition hover:border-[#8B2E2E] hover:bg-[#8B2E2E] hover:text-white"
+            >
+              <Heart
+                size={18}
+                fill="none"
+              />
+
+              {wishlistCount > 0 && (
+                <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#8B2E2E] px-1 text-[10px] font-bold text-white">
+                  {wishlistCount > 99
+                    ? "99+"
+                    : wishlistCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* CUSTOMER NOTIFICATIONS */}
+
+          {user && (
+            <button
+              type="button"
+              onClick={openNotifications}
+              aria-label="Notifications"
+              title="Notifications"
+              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[#6B1E1E]/15 text-[#6B1E1E]"
+            >
+              <Bell size={18} />
+
+              {unreadNotificationCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#8B2E2E] px-1 text-[9px] font-bold text-white">
+                  {unreadNotificationCount > 99
+                    ? "99+"
+                    : unreadNotificationCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* CUSTOMER ACCOUNT / LOGIN */}
+
+          <button
+            type="button"
+            onClick={openAccount}
+            aria-label={
+              user
+                ? "My Account"
+                : "Customer Login"
+            }
+            title={
+              user
+                ? "My Account"
+                : "Login"
+            }
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#6B1E1E]/15 text-[#6B1E1E]"
+          >
+            <User size={18} />
+          </button>
 
           {/* ADMIN */}
 
@@ -400,6 +635,42 @@ function Navbar() {
             >
               Contact
             </a>
+
+            {user && (
+              <button
+                type="button"
+                onClick={openWishlist}
+                className="flex items-center gap-2 text-left transition hover:text-[#8B2E2E]"
+              >
+                <Heart size={18} />
+                Wishlist
+                {wishlistCount > 0 && (
+                  <span className="rounded-full bg-[#8B2E2E] px-2 py-0.5 text-xs font-bold text-white">
+                    {wishlistCount > 99
+                      ? "99+"
+                      : wishlistCount}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {user && (
+              <button
+                type="button"
+                onClick={openNotifications}
+                className="flex items-center gap-2 text-left transition hover:text-[#8B2E2E]"
+              >
+                <Bell size={18} />
+                Notifications
+                {unreadNotificationCount > 0 && (
+                  <span className="rounded-full bg-[#8B2E2E] px-2 py-0.5 text-xs font-bold text-white">
+                    {unreadNotificationCount > 99
+                      ? "99+"
+                      : unreadNotificationCount}
+                  </span>
+                )}
+              </button>
+            )}
 
           </div>
 

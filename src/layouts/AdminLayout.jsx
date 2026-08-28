@@ -19,6 +19,7 @@ import {
   ShoppingCart,
   Settings,
   Tag,
+  Users,
 } from "lucide-react";
 
 import {
@@ -290,6 +291,15 @@ function AdminLayout() {
               icon={LayoutDashboard}
             >
               Dashboard
+            </SidebarLink>
+
+            {/* CUSTOMERS */}
+
+            <SidebarLink
+              to="/admin/customers"
+              icon={Users}
+            >
+              Customers
             </SidebarLink>
 
             {/* PRODUCTS */}

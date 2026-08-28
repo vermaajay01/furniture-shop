@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import {
   collection,
+  deleteDoc,
   onSnapshot,
   doc,
   updateDoc,
@@ -35,16 +36,26 @@ function Notifications() {
   // ======================================================
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, "notifications"),
-      (snapshot) => {
-        const data =
-          snapshot.docs.map((item) => ({
-            id: item.id,
-            ...item.data(),
-          }));
+    const notificationsRef =
+      collection(db, "notifications");
 
-        data.sort((a, b) => {
+    const customerNotificationsRef =
+      collection(
+        db,
+        "customerNotifications"
+      );
+
+    let adminData = [];
+    let customerData = [];
+
+    const updateCombined =
+      () => {
+        const combined = [
+          ...adminData,
+          ...customerData,
+        ];
+
+        combined.sort((a, b) => {
           const timeA =
             a.createdAt?.toMillis?.() || 0;
 
@@ -54,20 +65,64 @@ function Notifications() {
           return timeB - timeA;
         });
 
-        setNotifications(data);
+        setNotifications(combined);
         setLoading(false);
-      },
-      (error) => {
-        console.error(
-          "Notification loading error:",
-          error
-        );
+      };
 
-        setLoading(false);
-      }
-    );
+    const unsubscribeAdmin =
+      onSnapshot(
+        notificationsRef,
+        (snapshot) => {
+          adminData =
+            snapshot.docs.map(
+              (item) => ({
+                id: item.id,
+                notificationSource:
+                  "notifications",
+                ...item.data(),
+              })
+            );
 
-    return () => unsubscribe();
+          updateCombined();
+        },
+        (error) => {
+          console.error(
+            "Admin notification loading error:",
+            error
+          );
+
+          setLoading(false);
+        }
+      );
+
+    const unsubscribeCustomer =
+      onSnapshot(
+        customerNotificationsRef,
+        (snapshot) => {
+          customerData =
+            snapshot.docs.map(
+              (item) => ({
+                id: `customer-${item.id}`,
+                notificationSource:
+                  "customerNotifications",
+                ...item.data(),
+              })
+            );
+
+          updateCombined();
+        },
+        (error) => {
+          console.error(
+            "Customer notification loading error:",
+            error
+          );
+        }
+      );
+
+    return () => {
+      unsubscribeAdmin();
+      unsubscribeCustomer();
+    };
   }, []);
 
   // ======================================================
@@ -76,8 +131,28 @@ function Notifications() {
 
   const markAsRead = async (id) => {
     try {
+      const notification =
+        notifications.find(
+          (item) => item.id === id
+        );
+
+      if (!notification) {
+        return;
+      }
+
       await updateDoc(
-        doc(db, "notifications", id),
+        doc(
+          db,
+          notification.notificationSource ||
+            "notifications",
+          notification.notificationSource ===
+          "customerNotifications"
+            ? id.replace(
+                "customer-",
+                ""
+              )
+            : id
+        ),
         {
           read: true,
         }
@@ -108,11 +183,24 @@ function Notifications() {
       const batch = writeBatch(db);
 
       unread.forEach((item) => {
+        const collectionName =
+          item.notificationSource ||
+          "notifications";
+
+        const documentId =
+          collectionName ===
+          "customerNotifications"
+            ? item.id.replace(
+                "customer-",
+                ""
+              )
+            : item.id;
+
         batch.update(
           doc(
             db,
-            "notifications",
-            item.id
+            collectionName,
+            documentId
           ),
           {
             read: true,
@@ -138,11 +226,34 @@ function Notifications() {
     id
   ) => {
     try {
-      // Delete functionality can be
-      // connected here if required.
-      console.log(
-        "Delete notification:",
-        id
+      const notification =
+        notifications.find(
+          (item) => item.id === id
+        );
+
+      if (!notification) {
+        return;
+      }
+
+      const collectionName =
+        notification.notificationSource ||
+        "notifications";
+
+      const documentId =
+        collectionName ===
+        "customerNotifications"
+          ? id.replace(
+              "customer-",
+              ""
+            )
+          : id;
+
+      await deleteDoc(
+        doc(
+          db,
+          collectionName,
+          documentId
+        )
       );
     } catch (error) {
       console.error(
