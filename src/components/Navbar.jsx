@@ -34,6 +34,8 @@ function Navbar() {
 
   const { cartCount } = useCart();
 
+  const { user } = useAuth();
+
   const { wishlist } = useWishlist();
 
   const wishlistCount =
