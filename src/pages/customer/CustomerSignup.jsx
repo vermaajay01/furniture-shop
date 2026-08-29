@@ -120,7 +120,7 @@ function CustomerSignup() {
       setLoading(true);
 
       // ==================================================
-      // CREATE FIREBASE USER
+      // CREATE FIREBASE AUTH USER
       // ==================================================
 
       const credential =
@@ -146,7 +146,56 @@ function CustomerSignup() {
       );
 
       // ==================================================
-      // CUSTOMER PROFILE
+      // CUSTOMER PROFILE DATA
+      // ==================================================
+
+      const customerData = {
+        uid:
+          currentUser.uid,
+
+        name:
+          name.trim(),
+
+        displayName:
+          name.trim(),
+
+        mobile:
+          cleanMobile,
+
+        phone:
+          cleanMobile,
+
+        email:
+          email.trim(),
+
+        createdAt:
+          serverTimestamp(),
+
+        updatedAt:
+          serverTimestamp(),
+      };
+
+      // ==================================================
+      // USERS COLLECTION
+      //
+      // Admin Customers reads from:
+      // users/{uid}
+      // ==================================================
+
+      await setDoc(
+        doc(
+          db,
+          "users",
+          currentUser.uid
+        ),
+        customerData
+      );
+
+      // ==================================================
+      // CUSTOMERS COLLECTION
+      //
+      // Keep this for compatibility with
+      // any existing customer-related code.
       // ==================================================
 
       await setDoc(
@@ -155,25 +204,7 @@ function CustomerSignup() {
           "customers",
           currentUser.uid
         ),
-        {
-          uid:
-            currentUser.uid,
-
-          name:
-            name.trim(),
-
-          mobile:
-            cleanMobile,
-
-          email:
-            email.trim(),
-
-          createdAt:
-            serverTimestamp(),
-
-          updatedAt:
-            serverTimestamp(),
-        }
+        customerData
       );
 
       // ==================================================
@@ -261,6 +292,7 @@ function CustomerSignup() {
           {/* NAME */}
 
           <div>
+
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Full Name
             </label>
@@ -277,11 +309,13 @@ function CustomerSignup() {
               autoComplete="name"
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-[#8B2E2E]"
             />
+
           </div>
 
           {/* MOBILE */}
 
           <div>
+
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Mobile Number
             </label>
@@ -300,11 +334,13 @@ function CustomerSignup() {
               maxLength={10}
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-[#8B2E2E]"
             />
+
           </div>
 
           {/* EMAIL */}
 
           <div>
+
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Email
             </label>
@@ -321,11 +357,13 @@ function CustomerSignup() {
               autoComplete="email"
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-[#8B2E2E]"
             />
+
           </div>
 
           {/* PASSWORD */}
 
           <div>
+
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Password
             </label>
@@ -342,11 +380,13 @@ function CustomerSignup() {
               autoComplete="new-password"
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-[#8B2E2E]"
             />
+
           </div>
 
           {/* CONFIRM PASSWORD */}
 
           <div>
+
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Confirm Password
             </label>
@@ -365,6 +405,7 @@ function CustomerSignup() {
               autoComplete="new-password"
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-[#8B2E2E]"
             />
+
           </div>
 
           {/* SUBMIT */}
