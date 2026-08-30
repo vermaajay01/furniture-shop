@@ -194,7 +194,24 @@ function Navbar({
   return (
     <header className="fixed top-0 z-50 w-full border-b border-[#6B1E1E]/10 bg-[#FFFCF8]/95 shadow-sm backdrop-blur-md">
 
-      <div className="mx-auto flex h-[78px] max-w-7xl items-center justify-between gap-3 px-3 sm:gap-4 sm:px-6">
+      <div className="mx-auto flex h-[78px] max-w-7xl items-center gap-3 px-3 sm:gap-4 sm:px-6">
+
+        {/* ==================================================
+            SIDEBAR BUTTON
+            LEFT SIDE — DESKTOP + MOBILE
+        ================================================== */}
+
+        <button
+          type="button"
+          onClick={onMenuClick}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#6B1E1E] text-white transition hover:bg-[#8B2E2E] hover:shadow-md"
+          aria-label="Open sidebar"
+          title="Open sidebar"
+        >
+          <Menu
+            size={21}
+          />
+        </button>
 
         {/* ==================================================
             LOGO
@@ -204,6 +221,7 @@ function Navbar({
           to="/"
           className="shrink-0"
         >
+
           <h1 className="text-xl font-bold tracking-wide text-[#6B1E1E] sm:text-2xl">
             हरि{" "}
             <span className="text-[#B8863B]">
@@ -214,13 +232,14 @@ function Navbar({
           <p className="text-[7px] font-semibold tracking-[0.25em] text-[#6B1E1E] sm:text-[10px] sm:tracking-[0.28em]">
             FURNITURE HOUSE
           </p>
+
         </Link>
 
         {/* ==================================================
             DESKTOP NAVIGATION
         ================================================== */}
 
-        <nav className="hidden items-center gap-5 lg:flex xl:gap-8">
+        <nav className="hidden flex-1 items-center justify-center gap-5 lg:flex xl:gap-8">
 
           <Link
             to="/"
@@ -270,7 +289,7 @@ function Navbar({
             ACTIONS
         ================================================== */}
 
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="ml-auto flex items-center gap-1 sm:gap-2">
 
           {/* ==================================================
               SEARCH
@@ -409,25 +428,6 @@ function Navbar({
           >
             <User
               size={18}
-            />
-          </button>
-
-          {/* ==================================================
-              SIDEBAR BUTTON
-              DESKTOP + MOBILE
-          ================================================== */}
-
-          <button
-            type="button"
-            onClick={
-              onMenuClick
-            }
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#6B1E1E] text-white transition hover:bg-[#8B2E2E] hover:shadow-md"
-            aria-label="Open sidebar"
-            title="Open sidebar"
-          >
-            <Menu
-              size={21}
             />
           </button>
 
