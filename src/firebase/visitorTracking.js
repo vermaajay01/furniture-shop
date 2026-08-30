@@ -9,17 +9,25 @@ import {
 import { db } from "./firebase";
 
 // ======================================================
-// STORAGE KEY
+// STORAGE KEYS
 // ======================================================
 
 const VISITOR_ID_KEY =
   "hari_om_visitor_id";
 
+const LOCATION_CACHE_KEY =
+  "hari_om_visitor_location";
+
+const LOCATION_CACHE_TIME_KEY =
+  "hari_om_visitor_location_time";
+
+// Cache location for 24 hours.
+// This prevents ipapi.co from being called repeatedly.
+const LOCATION_CACHE_DURATION =
+  24 * 60 * 60 * 1000;
+
 // ======================================================
 // LOCATION API
-//
-// IP-based location is approximate and may be affected by
-// VPNs, mobile networks, proxies, or ISP routing.
 // ======================================================
 
 const LOCATION_API =
@@ -30,7 +38,8 @@ const LOCATION_API =
 // ======================================================
 
 function getDeviceType() {
-  const width = window.innerWidth;
+  const width =
+    window.innerWidth;
 
   if (width <= 767) {
     return "Mobile";
@@ -51,7 +60,9 @@ function getBrowser() {
   const userAgent =
     navigator.userAgent;
 
-  if (userAgent.includes("Edg/")) {
+  if (
+    userAgent.includes("Edg/")
+  ) {
     return "Microsoft Edge";
   }
 
@@ -69,7 +80,9 @@ function getBrowser() {
     return "Google Chrome";
   }
 
-  if (userAgent.includes("Firefox")) {
+  if (
+    userAgent.includes("Firefox")
+  ) {
     return "Mozilla Firefox";
   }
 
@@ -91,11 +104,19 @@ function getOperatingSystem() {
   const userAgent =
     navigator.userAgent;
 
-  if (/Windows NT/i.test(userAgent)) {
+  if (
+    /Windows NT/i.test(
+      userAgent
+    )
+  ) {
     return "Windows";
   }
 
-  if (/Android/i.test(userAgent)) {
+  if (
+    /Android/i.test(
+      userAgent
+    )
+  ) {
     return "Android";
   }
 
@@ -107,11 +128,19 @@ function getOperatingSystem() {
     return "iOS";
   }
 
-  if (/Mac OS X/i.test(userAgent)) {
+  if (
+    /Mac OS X/i.test(
+      userAgent
+    )
+  ) {
     return "macOS";
   }
 
-  if (/Linux/i.test(userAgent)) {
+  if (
+    /Linux/i.test(
+      userAgent
+    )
+  ) {
     return "Linux";
   }
 
@@ -146,18 +175,21 @@ function getVisitorId() {
 // ======================================================
 
 function getToday() {
-  const now = new Date();
+  const now =
+    new Date();
 
   const year =
     now.getFullYear();
 
-  const month = String(
-    now.getMonth() + 1
-  ).padStart(2, "0");
+  const month =
+    String(
+      now.getMonth() + 1
+    ).padStart(2, "0");
 
-  const day = String(
-    now.getDate()
-  ).padStart(2, "0");
+  const day =
+    String(
+      now.getDate()
+    ).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 }
@@ -195,10 +227,114 @@ function getTrafficSource() {
 }
 
 // ======================================================
+// DEFAULT LOCATION
+// ======================================================
+
+function getUnknownLocation() {
+  return {
+    city: "Unknown",
+    region: "Unknown",
+    country: "Unknown",
+    countryCode: "",
+    timezone: "",
+  };
+}
+
+// ======================================================
+// GET CACHED LOCATION
+// ======================================================
+
+function getCachedLocation() {
+  try {
+    const cachedLocation =
+      localStorage.getItem(
+        LOCATION_CACHE_KEY
+      );
+
+    const cachedTime =
+      localStorage.getItem(
+        LOCATION_CACHE_TIME_KEY
+      );
+
+    if (
+      !cachedLocation ||
+      !cachedTime
+    ) {
+      return null;
+    }
+
+    const age =
+      Date.now() -
+      Number(cachedTime);
+
+    if (
+      age >
+      LOCATION_CACHE_DURATION
+    ) {
+      localStorage.removeItem(
+        LOCATION_CACHE_KEY
+      );
+
+      localStorage.removeItem(
+        LOCATION_CACHE_TIME_KEY
+      );
+
+      return null;
+    }
+
+    return JSON.parse(
+      cachedLocation
+    );
+  } catch {
+    return null;
+  }
+}
+
+// ======================================================
+// SAVE LOCATION CACHE
+// ======================================================
+
+function saveLocationCache(
+  location
+) {
+  try {
+    localStorage.setItem(
+      LOCATION_CACHE_KEY,
+      JSON.stringify(
+        location
+      )
+    );
+
+    localStorage.setItem(
+      LOCATION_CACHE_TIME_KEY,
+      String(Date.now())
+    );
+  } catch {
+    // Ignore localStorage errors.
+  }
+}
+
+// ======================================================
 // GET APPROXIMATE LOCATION
 // ======================================================
 
 async function getVisitorLocation() {
+
+  // ----------------------------------------------------
+  // FIRST: USE CACHE
+  // ----------------------------------------------------
+
+  const cachedLocation =
+    getCachedLocation();
+
+  if (cachedLocation) {
+    return cachedLocation;
+  }
+
+  // ----------------------------------------------------
+  // SECOND: REQUEST LOCATION
+  // ----------------------------------------------------
+
   try {
     const response =
       await fetch(
@@ -212,6 +348,20 @@ async function getVisitorLocation() {
         }
       );
 
+    // --------------------------------------------------
+    // RATE LIMITED
+    // --------------------------------------------------
+
+    if (
+      response.status === 429
+    ) {
+      console.warn(
+        "Visitor location API rate limit reached. Continuing without location."
+      );
+
+      return getUnknownLocation();
+    }
+
     if (!response.ok) {
       throw new Error(
         `Location request failed: ${response.status}`
@@ -221,12 +371,14 @@ async function getVisitorLocation() {
     const data =
       await response.json();
 
-    return {
+    const location = {
       city:
-        data.city || "Unknown",
+        data.city ||
+        "Unknown",
 
       region:
-        data.region || "Unknown",
+        data.region ||
+        "Unknown",
 
       country:
         data.country_name ||
@@ -238,21 +390,28 @@ async function getVisitorLocation() {
         "",
 
       timezone:
-        data.timezone || "",
+        data.timezone ||
+        "",
     };
+
+    // --------------------------------------------------
+    // SAVE FOR 24 HOURS
+    // --------------------------------------------------
+
+    saveLocationCache(
+      location
+    );
+
+    return location;
+
   } catch (error) {
+
     console.warn(
       "Visitor location unavailable:",
       error
     );
 
-    return {
-      city: "Unknown",
-      region: "Unknown",
-      country: "Unknown",
-      countryCode: "",
-      timezone: "",
-    };
+    return getUnknownLocation();
   }
 }
 
@@ -261,7 +420,13 @@ async function getVisitorLocation() {
 // ======================================================
 
 export async function trackVisitor() {
+
   try {
+
+    // ==================================================
+    // BASIC INFORMATION
+    // ==================================================
+
     const visitorId =
       getVisitorId();
 
@@ -296,26 +461,33 @@ export async function trackVisitor() {
     // ==================================================
     // DAILY USER DOCUMENT
     //
-    // One anonymous user gets one document per day.
+    // One anonymous user gets
+    // one document per day.
     // ==================================================
 
     const documentId =
       `${visitorId}_${today}`;
 
-    const visitorRef = doc(
-      db,
-      "visitorAnalytics",
-      documentId
-    );
+    const visitorRef =
+      doc(
+        db,
+        "visitorAnalytics",
+        documentId
+      );
 
     const visitorSnapshot =
-      await getDoc(visitorRef);
+      await getDoc(
+        visitorRef
+      );
 
     // ==================================================
     // EXISTING USER TODAY
     // ==================================================
 
-    if (visitorSnapshot.exists()) {
+    if (
+      visitorSnapshot.exists()
+    ) {
+
       await setDoc(
         visitorRef,
         {
@@ -328,7 +500,6 @@ export async function trackVisitor() {
           visitCount:
             increment(1),
 
-          // Refresh approximate location
           city:
             location.city,
 
@@ -413,9 +584,11 @@ export async function trackVisitor() {
     );
 
   } catch (error) {
+
     console.error(
       "Visitor analytics failed:",
       error
     );
+
   }
 }
