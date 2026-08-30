@@ -33,23 +33,44 @@ import {
 import { db } from "../../firebase/firebase";
 
 function AdminDashboard() {
-  const [visitorCount, setVisitorCount] = useState(0);
-  const [todayVisitors, setTodayVisitors] = useState(0);
-  const [monthVisitors, setMonthVisitors] = useState(0);
-  const [todayUsers, setTodayUsers] = useState([]);
-  const [showTodayUsers, setShowTodayUsers] = useState(false);
-  const [deletingVisitors, setDeletingVisitors] = useState(false);
+  const [visitorCount, setVisitorCount] =
+    useState(0);
+
+  const [todayVisitors, setTodayVisitors] =
+    useState(0);
+
+  const [monthVisitors, setMonthVisitors] =
+    useState(0);
+
+  const [todayUsers, setTodayUsers] =
+    useState([]);
+
+  const [showTodayUsers, setShowTodayUsers] =
+    useState(false);
+
+  const [deletingVisitors, setDeletingVisitors] =
+    useState(false);
+
   const [visitorDeleteMessage, setVisitorDeleteMessage] =
     useState("");
 
-  const [productCount, setProductCount] = useState(0);
-  const [requestCount, setRequestCount] = useState(0);
+  const [productCount, setProductCount] =
+    useState(0);
 
-  const [customerCount, setCustomerCount] = useState(0);
+  const [requestCount, setRequestCount] =
+    useState(0);
 
-  const [orderCount, setOrderCount] = useState(0);
-  const [newOrderCount, setNewOrderCount] = useState(0);
-  const [orderValue, setOrderValue] = useState(0);
+  const [customerCount, setCustomerCount] =
+    useState(0);
+
+  const [orderCount, setOrderCount] =
+    useState(0);
+
+  const [newOrderCount, setNewOrderCount] =
+    useState(0);
+
+  const [orderValue, setOrderValue] =
+    useState(0);
 
   const [unreadNotifications, setUnreadNotifications] =
     useState(0);
@@ -120,7 +141,8 @@ function AdminDashboard() {
   const getToday = () => {
     const now = new Date();
 
-    const year = now.getFullYear();
+    const year =
+      now.getFullYear();
 
     const month = String(
       now.getMonth() + 1
@@ -136,7 +158,8 @@ function AdminDashboard() {
   const getCurrentMonth = () => {
     const now = new Date();
 
-    const year = now.getFullYear();
+    const year =
+      now.getFullYear();
 
     const month = String(
       now.getMonth() + 1
@@ -156,29 +179,32 @@ function AdminDashboard() {
       "website"
     );
 
-    const unsubscribe = onSnapshot(
-      settingsRef,
-      (snapshot) => {
-        if (!snapshot.exists()) {
-          return;
+    const unsubscribe =
+      onSnapshot(
+        settingsRef,
+        (snapshot) => {
+          if (!snapshot.exists()) {
+            return;
+          }
+
+          const data =
+            snapshot.data();
+
+          setSelectedTheme(
+            data.themeId ||
+              "classic-maroon"
+          );
+        },
+        (error) => {
+          console.error(
+            "Theme settings error:",
+            error
+          );
         }
+      );
 
-        const data = snapshot.data();
-
-        setSelectedTheme(
-          data.themeId ||
-            "classic-maroon"
-        );
-      },
-      (error) => {
-        console.error(
-          "Theme settings error:",
-          error
-        );
-      }
-    );
-
-    return () => unsubscribe();
+    return () =>
+      unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -191,168 +217,186 @@ function AdminDashboard() {
         setThemeMessage("");
       }, 2500);
 
-    return () => {
+    return () =>
       window.clearTimeout(timer);
-    };
   }, [themeMessage]);
 
-  const handleThemeChange = async (
-    themeId
-  ) => {
-    if (
-      themeId === selectedTheme ||
-      themeSaving
-    ) {
-      return;
-    }
+  const handleThemeChange =
+    async (themeId) => {
+      if (
+        themeId === selectedTheme ||
+        themeSaving
+      ) {
+        return;
+      }
 
-    try {
-      setThemeSaving(true);
-      setThemeMessage("");
+      try {
+        setThemeSaving(true);
+        setThemeMessage("");
 
-      await setDoc(
-        doc(
-          db,
-          "settings",
-          "website"
-        ),
-        {
-          themeId,
-        },
-        {
-          merge: true,
-        }
-      );
+        await setDoc(
+          doc(
+            db,
+            "settings",
+            "website"
+          ),
+          {
+            themeId,
+          },
+          {
+            merge: true,
+          }
+        );
 
-      setSelectedTheme(themeId);
-      setThemeMessage(
-        "Theme saved successfully."
-      );
-    } catch (error) {
-      console.error(
-        "Unable to save website theme:",
-        error
-      );
+        setSelectedTheme(
+          themeId
+        );
 
-      setThemeMessage(
-        "Unable to save theme."
-      );
-    } finally {
-      setThemeSaving(false);
-    }
-  };
+        setThemeMessage(
+          "Theme saved successfully."
+        );
+      } catch (error) {
+        console.error(
+          "Unable to save website theme:",
+          error
+        );
+
+        setThemeMessage(
+          "Unable to save theme."
+        );
+      } finally {
+        setThemeSaving(false);
+      }
+    };
 
   // ======================================================
   // WEBSITE ANALYTICS
   // ======================================================
 
   useEffect(() => {
-    const analyticsRef = collection(
-      db,
-      "visitorAnalytics"
-    );
+    const analyticsRef =
+      collection(
+        db,
+        "visitorAnalytics"
+      );
 
-    const unsubscribe = onSnapshot(
-      analyticsRef,
-      (snapshot) => {
-        const analyticsUsers =
-          snapshot.docs.map((item) => ({
-            id: item.id,
-            ...item.data(),
-          }));
+    const unsubscribe =
+      onSnapshot(
+        analyticsRef,
+        (snapshot) => {
+          const analyticsUsers =
+            snapshot.docs.map(
+              (item) => ({
+                id: item.id,
+                ...item.data(),
+              })
+            );
 
-        const today = getToday();
-        const currentMonth = getCurrentMonth();
+          const today =
+            getToday();
 
-        // ==================================================
-        // TODAY'S USERS
-        // ==================================================
+          const currentMonth =
+            getCurrentMonth();
 
-        const todayList =
-          analyticsUsers
-            .filter(
-              (user) =>
-                user.date === today
-            )
-            .sort((a, b) => {
-              const timeA =
-                a.lastVisitAt?.toMillis?.() ||
-                a.firstVisitAt?.toMillis?.() ||
-                0;
+          // ==================================================
+          // TODAY'S USERS
+          // ==================================================
 
-              const timeB =
-                b.lastVisitAt?.toMillis?.() ||
-                b.firstVisitAt?.toMillis?.() ||
-                0;
-
-              return timeB - timeA;
-            });
-
-        // ==================================================
-        // THIS MONTH
-        // ==================================================
-
-        const monthCount =
-          analyticsUsers.filter(
-            (user) =>
-              typeof user.date === "string" &&
-              user.date.startsWith(
-                currentMonth
+          const todayList =
+            analyticsUsers
+              .filter(
+                (user) =>
+                  user.date === today
               )
-          ).length;
+              .sort((a, b) => {
+                const timeA =
+                  a.lastVisitAt?.toMillis?.() ||
+                  a.firstVisitAt?.toMillis?.() ||
+                  0;
 
-        // ==================================================
-        // DASHBOARD COUNTS
-        // ==================================================
+                const timeB =
+                  b.lastVisitAt?.toMillis?.() ||
+                  b.firstVisitAt?.toMillis?.() ||
+                  0;
 
-        setTodayUsers(todayList);
-        setTodayVisitors(todayList.length);
+                return (
+                  timeB - timeA
+                );
+              });
 
-        setMonthVisitors(monthCount);
+          // ==================================================
+          // THIS MONTH
+          // ==================================================
 
-        setVisitorCount(
-          analyticsUsers.length
-        );
-      },
-      (error) => {
-        console.error(
-          "Website analytics error:",
-          error
-        );
-      }
-    );
+          const monthCount =
+            analyticsUsers.filter(
+              (user) =>
+                typeof user.date ===
+                  "string" &&
+                user.date.startsWith(
+                  currentMonth
+                )
+            ).length;
 
-    return () => unsubscribe();
+          // ==================================================
+          // DASHBOARD COUNTS
+          // ==================================================
+
+          setTodayUsers(
+            todayList
+          );
+
+          setTodayVisitors(
+            todayList.length
+          );
+
+          setMonthVisitors(
+            monthCount
+          );
+
+          setVisitorCount(
+            analyticsUsers.length
+          );
+        },
+        (error) => {
+          console.error(
+            "Website analytics error:",
+            error
+          );
+        }
+      );
+
+    return () =>
+      unsubscribe();
   }, []);
 
   // ======================================================
   // FORMAT ANALYTICS TIME
   // ======================================================
 
-  const formatAnalyticsTime = (
-    timestamp
-  ) => {
-    if (!timestamp) {
-      return "—";
-    }
+  const formatAnalyticsTime =
+    (timestamp) => {
+      if (!timestamp) {
+        return "—";
+      }
 
-    try {
-      return timestamp
-        .toDate()
-        .toLocaleString(
-          "en-IN",
-          {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-          }
-        );
-    } catch {
-      return "—";
-    }
-  };
+      try {
+        return timestamp
+          .toDate()
+          .toLocaleString(
+            "en-IN",
+            {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            }
+          );
+      } catch {
+        return "—";
+      }
+    };
 
   // ======================================================
   // ANALYTICS TABLE
@@ -365,6 +409,7 @@ function AdminDashboard() {
 
     return (
       <section className="mt-8 bg-white shadow-sm">
+
         <div className="flex flex-col gap-4 border-b border-gray-100 p-6 sm:flex-row sm:items-center sm:justify-between">
 
           <div>
@@ -377,8 +422,10 @@ function AdminDashboard() {
             </h2>
 
             <p className="mt-1 text-sm text-gray-500">
-              {todayUsers.length.toLocaleString("en-IN")} unique
-              anonymous users recorded today.
+              {todayUsers.length.toLocaleString(
+                "en-IN"
+              )}{" "}
+              unique anonymous users recorded today.
             </p>
           </div>
 
@@ -396,8 +443,11 @@ function AdminDashboard() {
         </div>
 
         <div className="overflow-x-auto">
+
           {todayUsers.length === 0 ? (
+
             <div className="p-12 text-center">
+
               <Users
                 size={38}
                 className="mx-auto text-gray-300"
@@ -408,14 +458,19 @@ function AdminDashboard() {
               </p>
 
               <p className="mt-1 text-sm text-gray-400">
-                New visitors will appear here when analytics
-                tracking records them.
+                New visitors will appear here when analytics tracking records them.
               </p>
+
             </div>
+
           ) : (
+
             <table className="min-w-[1500px] w-full text-left text-sm">
+
               <thead className="bg-[#F8F1E7] text-xs uppercase tracking-wider text-gray-500">
+
                 <tr>
+
                   <th className="px-4 py-4 font-semibold">
                     Time
                   </th>
@@ -467,192 +522,244 @@ function AdminDashboard() {
                   <th className="px-4 py-4 font-semibold">
                     Visits
                   </th>
+
                 </tr>
+
               </thead>
 
               <tbody className="divide-y divide-gray-100">
-                {todayUsers.map((user) => (
-                  <tr
-                    key={user.id}
-                    className="transition hover:bg-[#F8F1E7]/60"
-                  >
-                    <td className="whitespace-nowrap px-4 py-4 text-gray-600">
-                      {formatAnalyticsTime(
-                        user.lastVisitAt ||
-                          user.firstVisitAt
-                      )}
-                    </td>
 
-                    <td className="px-4 py-4">
-                      <span className="font-mono text-xs text-[#6B1E1E]">
-                        {user.visitorId || user.id}
-                      </span>
-                    </td>
+                {todayUsers.map(
+                  (user) => (
+                    <tr
+                      key={user.id}
+                      className="transition hover:bg-[#F8F1E7]/60"
+                    >
 
-                    <td className="px-4 py-4 font-medium text-gray-700">
-                      {user.city || "—"}
-                    </td>
+                      <td className="whitespace-nowrap px-4 py-4 text-gray-600">
+                        {formatAnalyticsTime(
+                          user.lastVisitAt ||
+                            user.firstVisitAt
+                        )}
+                      </td>
 
-                    <td className="px-4 py-4 text-gray-600">
-                      {user.region || "—"}
-                    </td>
+                      <td className="px-4 py-4">
+                        <span className="font-mono text-xs text-[#6B1E1E]">
+                          {user.visitorId ||
+                            user.id}
+                        </span>
+                      </td>
 
-                    <td className="px-4 py-4 text-gray-600">
-                      {user.country || "—"}
-                    </td>
+                      <td className="px-4 py-4 font-medium text-gray-700">
+                        {user.city ||
+                          "—"}
+                      </td>
 
-                    <td className="px-4 py-4 font-medium text-gray-700">
-                      {user.deviceType || "—"}
-                    </td>
+                      <td className="px-4 py-4 text-gray-600">
+                        {user.region ||
+                          "—"}
+                      </td>
 
-                    <td className="px-4 py-4 text-gray-600">
-                      {user.browser || "—"}
-                    </td>
+                      <td className="px-4 py-4 text-gray-600">
+                        {user.country ||
+                          "—"}
+                      </td>
 
-                    <td className="px-4 py-4 text-gray-600">
-                      {user.operatingSystem || "—"}
-                    </td>
+                      <td className="px-4 py-4 font-medium text-gray-700">
+                        {user.deviceType ||
+                          "—"}
+                      </td>
 
-                    <td className="px-4 py-4 text-gray-600">
-                      {user.screenResolution || "—"}
-                    </td>
+                      <td className="px-4 py-4 text-gray-600">
+                        {user.browser ||
+                          "—"}
+                      </td>
 
-                    <td className="max-w-[180px] truncate px-4 py-4 text-gray-600">
-                      {user.firstPage || "—"}
-                    </td>
+                      <td className="px-4 py-4 text-gray-600">
+                        {user.operatingSystem ||
+                          "—"}
+                      </td>
 
-                    <td className="max-w-[180px] truncate px-4 py-4 text-gray-600">
-                      {user.lastPage || "—"}
-                    </td>
+                      <td className="px-4 py-4 text-gray-600">
+                        {user.screenResolution ||
+                          "—"}
+                      </td>
 
-                    <td className="max-w-[160px] truncate px-4 py-4 text-gray-600">
-                      {user.trafficSource || "—"}
-                    </td>
+                      <td className="max-w-[180px] truncate px-4 py-4 text-gray-600">
+                        {user.firstPage ||
+                          "—"}
+                      </td>
 
-                    <td className="px-4 py-4 font-semibold text-[#6B1E1E]">
-                      {Number(
-                        user.visitCount || 0
-                      ).toLocaleString("en-IN")}
-                    </td>
-                  </tr>
-                ))}
+                      <td className="max-w-[180px] truncate px-4 py-4 text-gray-600">
+                        {user.lastPage ||
+                          "—"}
+                      </td>
+
+                      <td className="max-w-[160px] truncate px-4 py-4 text-gray-600">
+                        {user.trafficSource ||
+                          "—"}
+                      </td>
+
+                      <td className="px-4 py-4 font-semibold text-[#6B1E1E]">
+                        {Number(
+                          user.visitCount ||
+                            0
+                        ).toLocaleString(
+                          "en-IN"
+                        )}
+                      </td>
+
+                    </tr>
+                  )
+                )}
+
               </tbody>
+
             </table>
+
           )}
+
         </div>
+
       </section>
     );
   };
 
   // ======================================================
   // DELETE OLD VISITOR DATA
-  //
-  // Deletes only the legacy "visitors" collection.
-  // The new "visitorAnalytics" collection is untouched.
   // ======================================================
 
-  const handleDeleteOldVisitorData = async () => {
-    if (deletingVisitors) {
-      return;
-    }
+  const handleDeleteOldVisitorData =
+    async () => {
 
-    const confirmed = window.confirm(
-      "Delete all old visitor data?\n\n" +
-        "This will permanently delete records from the legacy " +
-        '"visitors" collection only.\n\n' +
-        "Your new visitorAnalytics data, orders, products, " +
-        "requests and other website data will NOT be deleted."
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      setDeletingVisitors(true);
-      setVisitorDeleteMessage("");
-
-      const visitorsRef = collection(
-        db,
-        "visitors"
-      );
-
-      const snapshot = await new Promise(
-        (resolve, reject) => {
-          const unsubscribe = onSnapshot(
-            visitorsRef,
-            (currentSnapshot) => {
-              unsubscribe();
-              resolve(currentSnapshot);
-            },
-            (error) => {
-              unsubscribe();
-              reject(error);
-            }
-          );
-        }
-      );
-
-      if (snapshot.empty) {
-        setVisitorDeleteMessage(
-          "No old visitor data was found."
-        );
+      if (deletingVisitors) {
         return;
       }
 
-      await Promise.all(
-        snapshot.docs.map((visitorDoc) =>
-          deleteDoc(visitorDoc.ref)
-        )
-      );
+      const confirmed =
+        window.confirm(
+          "Delete all old visitor data?\n\n" +
+            "This will permanently delete records from the legacy " +
+            '"visitors" collection only.\n\n' +
+            "Your new visitorAnalytics data, orders, products, " +
+            "requests and other website data will NOT be deleted."
+        );
 
-      setVisitorDeleteMessage(
-        `${snapshot.size.toLocaleString(
-          "en-IN"
-        )} old visitor record${
-          snapshot.size === 1 ? "" : "s"
-        } deleted successfully.`
-      );
-    } catch (error) {
-      console.error(
-        "Unable to delete old visitor data:",
-        error
-      );
+      if (!confirmed) {
+        return;
+      }
 
-      setVisitorDeleteMessage(
-        "Unable to delete old visitor data. Please try again."
-      );
-    } finally {
-      setDeletingVisitors(false);
-    }
-  };
+      try {
+        setDeletingVisitors(
+          true
+        );
+
+        setVisitorDeleteMessage(
+          ""
+        );
+
+        const visitorsRef =
+          collection(
+            db,
+            "visitors"
+          );
+
+        const snapshot =
+          await new Promise(
+            (resolve, reject) => {
+              const unsubscribe =
+                onSnapshot(
+                  visitorsRef,
+                  (currentSnapshot) => {
+                    unsubscribe();
+                    resolve(
+                      currentSnapshot
+                    );
+                  },
+                  (error) => {
+                    unsubscribe();
+                    reject(error);
+                  }
+                );
+            }
+          );
+
+        if (snapshot.empty) {
+          setVisitorDeleteMessage(
+            "No old visitor data was found."
+          );
+
+          return;
+        }
+
+        await Promise.all(
+          snapshot.docs.map(
+            (visitorDoc) =>
+              deleteDoc(
+                visitorDoc.ref
+              )
+          )
+        );
+
+        setVisitorDeleteMessage(
+          `${snapshot.size.toLocaleString(
+            "en-IN"
+          )} old visitor record${
+            snapshot.size === 1
+              ? ""
+              : "s"
+          } deleted successfully.`
+        );
+
+      } catch (error) {
+
+        console.error(
+          "Unable to delete old visitor data:",
+          error
+        );
+
+        setVisitorDeleteMessage(
+          "Unable to delete old visitor data. Please try again."
+        );
+
+      } finally {
+        setDeletingVisitors(
+          false
+        );
+      }
+    };
 
   // ======================================================
   // PRODUCT COUNT
   // ======================================================
 
   useEffect(() => {
-    const productsRef = collection(
-      db,
-      "products"
-    );
 
-    const unsubscribe = onSnapshot(
-      productsRef,
-      (snapshot) => {
-        setProductCount(
-          snapshot.size
-        );
-      },
-      (error) => {
-        console.error(
-          "Product count error:",
-          error
-        );
-      }
-    );
+    const productsRef =
+      collection(
+        db,
+        "products"
+      );
 
-    return () => unsubscribe();
+    const unsubscribe =
+      onSnapshot(
+        productsRef,
+        (snapshot) => {
+          setProductCount(
+            snapshot.size
+          );
+        },
+        (error) => {
+          console.error(
+            "Product count error:",
+            error
+          );
+        }
+      );
+
+    return () =>
+      unsubscribe();
+
   }, []);
 
   // ======================================================
@@ -660,27 +767,32 @@ function AdminDashboard() {
   // ======================================================
 
   useEffect(() => {
-    const requestsRef = collection(
-      db,
-      "customRequests"
-    );
 
-    const unsubscribe = onSnapshot(
-      requestsRef,
-      (snapshot) => {
-        setRequestCount(
-          snapshot.size
-        );
-      },
-      (error) => {
-        console.error(
-          "Request count error:",
-          error
-        );
-      }
-    );
+    const requestsRef =
+      collection(
+        db,
+        "customRequests"
+      );
 
-    return () => unsubscribe();
+    const unsubscribe =
+      onSnapshot(
+        requestsRef,
+        (snapshot) => {
+          setRequestCount(
+            snapshot.size
+          );
+        },
+        (error) => {
+          console.error(
+            "Request count error:",
+            error
+          );
+        }
+      );
+
+    return () =>
+      unsubscribe();
+
   }, []);
 
   // ======================================================
@@ -688,27 +800,32 @@ function AdminDashboard() {
   // ======================================================
 
   useEffect(() => {
-    const usersRef = collection(
-      db,
-      "users"
-    );
 
-    const unsubscribe = onSnapshot(
-      usersRef,
-      (snapshot) => {
-        setCustomerCount(
-          snapshot.size
-        );
-      },
-      (error) => {
-        console.error(
-          "Customer count error:",
-          error
-        );
-      }
-    );
+    const customersRef =
+      collection(
+        db,
+        "customers"
+      );
 
-    return () => unsubscribe();
+    const unsubscribe =
+      onSnapshot(
+        customersRef,
+        (snapshot) => {
+          setCustomerCount(
+            snapshot.size
+          );
+        },
+        (error) => {
+          console.error(
+            "Customer count error:",
+            error
+          );
+        }
+      );
+
+    return () =>
+      unsubscribe();
+
   }, []);
 
   // ======================================================
@@ -716,60 +833,72 @@ function AdminDashboard() {
   // ======================================================
 
   useEffect(() => {
-    const ordersRef = collection(
-      db,
-      "orders"
-    );
 
-    const unsubscribe = onSnapshot(
-      ordersRef,
-      (snapshot) => {
-        let newOrders = 0;
-        let totalValue = 0;
+    const ordersRef =
+      collection(
+        db,
+        "orders"
+      );
 
-        snapshot.docs.forEach(
-          (item) => {
-            const order = item.data();
+    const unsubscribe =
+      onSnapshot(
+        ordersRef,
+        (snapshot) => {
 
-            if (
-              !order.status ||
-              order.status === "new"
-            ) {
-              newOrders++;
+          let newOrders = 0;
+          let totalValue = 0;
+
+          snapshot.docs.forEach(
+            (item) => {
+
+              const order =
+                item.data();
+
+              if (
+                !order.status ||
+                order.status === "new"
+              ) {
+                newOrders++;
+              }
+
+              if (
+                order.status !==
+                "cancelled"
+              ) {
+                totalValue +=
+                  Number(
+                    order.total ||
+                      0
+                  );
+              }
+
             }
+          );
 
-            if (
-              order.status !==
-              "cancelled"
-            ) {
-              totalValue += Number(
-                order.total || 0
-              );
-            }
-          }
-        );
+          setOrderCount(
+            snapshot.size
+          );
 
-        setOrderCount(
-          snapshot.size
-        );
+          setNewOrderCount(
+            newOrders
+          );
 
-        setNewOrderCount(
-          newOrders
-        );
+          setOrderValue(
+            totalValue
+          );
 
-        setOrderValue(
-          totalValue
-        );
-      },
-      (error) => {
-        console.error(
-          "Order statistics error:",
-          error
-        );
-      }
-    );
+        },
+        (error) => {
+          console.error(
+            "Order statistics error:",
+            error
+          );
+        }
+      );
 
-    return () => unsubscribe();
+    return () =>
+      unsubscribe();
+
   }, []);
 
   // ======================================================
@@ -777,6 +906,7 @@ function AdminDashboard() {
   // ======================================================
 
   useEffect(() => {
+
     const notificationsRef =
       collection(
         db,
@@ -793,75 +923,88 @@ function AdminDashboard() {
         )
       );
 
-    const unsubscribe = onSnapshot(
-      notificationsQuery,
-      (snapshot) => {
-        const notifications =
-          snapshot.docs.map(
-            (item) => ({
-              id: item.id,
-              ...item.data(),
-            })
+    const unsubscribe =
+      onSnapshot(
+        notificationsQuery,
+        (snapshot) => {
+
+          const notifications =
+            snapshot.docs.map(
+              (item) => ({
+                id: item.id,
+                ...item.data(),
+              })
+            );
+
+          notifications.sort(
+            (a, b) => {
+
+              const timeA =
+                a.createdAt?.toMillis?.() ||
+                0;
+
+              const timeB =
+                b.createdAt?.toMillis?.() ||
+                0;
+
+              return (
+                timeB - timeA
+              );
+            }
           );
 
-        notifications.sort(
-          (a, b) => {
-            const timeA =
-              a.createdAt?.toMillis?.() ||
-              0;
+          setUnreadNotifications(
+            notifications.length
+          );
 
-            const timeB =
-              b.createdAt?.toMillis?.() ||
-              0;
+          setRecentNotifications(
+            notifications.slice(
+              0,
+              5
+            )
+          );
 
-            return timeB - timeA;
-          }
-        );
+        },
+        (error) => {
+          console.error(
+            "Notification error:",
+            error
+          );
+        }
+      );
 
-        setUnreadNotifications(
-          notifications.length
-        );
+    return () =>
+      unsubscribe();
 
-        setRecentNotifications(
-          notifications.slice(0, 5)
-        );
-      },
-      (error) => {
-        console.error(
-          "Notification error:",
-          error
-        );
-      }
-    );
-
-    return () => unsubscribe();
   }, []);
 
   // ======================================================
   // FORMAT TIME
   // ======================================================
 
-  const formatTime = (timestamp) => {
-    if (!timestamp) {
-      return "Just now";
-    }
+  const formatTime =
+    (timestamp) => {
 
-    try {
-      return timestamp
-        .toDate()
-        .toLocaleString(
-          "en-IN",
-          {
-            day: "numeric",
-            month: "short",
-            hour: "numeric",
-            minute: "2-digit",
-          }
-        );
-    } catch {
-      return "Recently";
-    }
-  };
+      if (!timestamp) {
+        return "Just now";
+      }
+
+      try {
+        return timestamp
+          .toDate()
+          .toLocaleString(
+            "en-IN",
+            {
+              day: "numeric",
+              month: "short",
+              hour: "numeric",
+              minute: "2-digit",
+            }
+          );
+      } catch {
+        return "Recently";
+      }
+    };
 
   // ======================================================
   // STAT CARD
@@ -874,6 +1017,7 @@ function AdminDashboard() {
     description,
     iconClass,
   }) => {
+
     return (
       <div className="bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md">
 
@@ -1001,9 +1145,11 @@ function AdminDashboard() {
       ================================================== */}
 
       <section className="mt-8 bg-white p-6 shadow-sm">
+
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
 
           <div>
+
             <p className="text-sm font-medium uppercase tracking-[0.2em] text-[#B8863B]">
               Visitor Data
             </p>
@@ -1023,7 +1169,8 @@ function AdminDashboard() {
                 className={`mt-3 text-sm font-medium ${
                   visitorDeleteMessage.includes(
                     "successfully"
-                  ) || visitorDeleteMessage.includes(
+                  ) ||
+                  visitorDeleteMessage.includes(
                     "No old"
                   )
                     ? "text-green-700"
@@ -1033,22 +1180,30 @@ function AdminDashboard() {
                 {visitorDeleteMessage}
               </p>
             )}
+
           </div>
 
           <button
             type="button"
-            onClick={handleDeleteOldVisitorData}
-            disabled={deletingVisitors}
+            onClick={
+              handleDeleteOldVisitorData
+            }
+            disabled={
+              deletingVisitors
+            }
             className="flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-[#8B2E2E] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#6B1E1E] disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
           >
+
             <X size={17} />
 
             {deletingVisitors
               ? "Deleting..."
               : "Delete Old Visitor Data"}
+
           </button>
 
         </div>
+
       </section>
 
       <TodayUsersTable />
@@ -1126,7 +1281,9 @@ function AdminDashboard() {
               className="flex items-center gap-1 text-sm font-semibold text-[#8B2E2E]"
             >
               View
-              <ArrowRight size={16} />
+              <ArrowRight
+                size={16}
+              />
             </Link>
 
           </div>
@@ -1151,9 +1308,11 @@ function AdminDashboard() {
 
                 <Bell size={22} />
 
-                {unreadNotifications > 0 && (
+                {unreadNotifications >
+                  0 && (
                   <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#8B2E2E] px-1 text-[10px] font-bold text-white">
-                    {unreadNotifications > 99
+                    {unreadNotifications >
+                    99
                       ? "99+"
                       : unreadNotifications}
                   </span>
@@ -1180,7 +1339,9 @@ function AdminDashboard() {
               className="flex items-center gap-1 text-sm font-semibold text-[#8B2E2E]"
             >
               Requests
-              <ArrowRight size={16} />
+              <ArrowRight
+                size={16}
+              />
             </Link>
 
           </div>
@@ -1215,7 +1376,9 @@ function AdminDashboard() {
 
             <div className="flex items-center gap-4">
 
-              <ShoppingBag size={25} />
+              <ShoppingBag
+                size={25}
+              />
 
               <div>
 
@@ -1245,13 +1408,16 @@ function AdminDashboard() {
             to="/admin/customers"
             className="group flex items-center justify-between bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
           >
+
             <div className="flex items-center gap-4">
+
               <Users
                 size={25}
                 className="text-[#8B2E2E]"
               />
 
               <div>
+
                 <p className="font-semibold text-[#6B1E1E]">
                   Customers
                 </p>
@@ -1259,13 +1425,16 @@ function AdminDashboard() {
                 <p className="mt-1 text-sm text-gray-500">
                   View registered users
                 </p>
+
               </div>
+
             </div>
 
             <ArrowRight
               size={20}
               className="text-[#8B2E2E]"
             />
+
           </Link>
 
           {/* ORDERS */}
@@ -1380,7 +1549,9 @@ function AdminDashboard() {
             <div className="flex items-center gap-4">
 
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#F5E4E4] text-[#8B2E2E]">
-                <Palette size={22} />
+                <Palette
+                  size={22}
+                />
               </div>
 
               <div className="min-w-0">
@@ -1399,49 +1570,54 @@ function AdminDashboard() {
 
             <div className="mt-5 space-y-2">
 
-              {themes.map((theme) => (
-                <button
-                  key={theme.id}
-                  type="button"
-                  onClick={() =>
-                    handleThemeChange(
+              {themes.map(
+                (theme) => (
+                  <button
+                    key={theme.id}
+                    type="button"
+                    onClick={() =>
+                      handleThemeChange(
+                        theme.id
+                      )
+                    }
+                    disabled={
+                      themeSaving
+                    }
+                    className={`flex w-full items-center gap-3 rounded-lg border p-2 text-left transition ${
+                      selectedTheme ===
                       theme.id
-                    )
-                  }
-                  disabled={themeSaving}
-                  className={`flex w-full items-center gap-3 rounded-lg border p-2 text-left transition ${
-                    selectedTheme === theme.id
-                      ? "border-[#8B2E2E] bg-[#F8F1E7]"
-                      : "border-gray-100 hover:border-[#B8863B]/50 hover:bg-gray-50"
-                  }`}
-                >
+                        ? "border-[#8B2E2E] bg-[#F8F1E7]"
+                        : "border-gray-100 hover:border-[#B8863B]/50 hover:bg-gray-50"
+                    }`}
+                  >
 
-                  <span
-                    className={`h-7 w-7 shrink-0 rounded-full ${theme.preview}`}
-                  />
-
-                  <span className="min-w-0 flex-1">
-
-                    <span className="block truncate text-xs font-semibold text-[#2B1714]">
-                      {theme.name}
-                    </span>
-
-                    <span className="block truncate text-[10px] text-gray-400">
-                      {theme.description}
-                    </span>
-
-                  </span>
-
-                  {selectedTheme ===
-                    theme.id && (
-                    <Check
-                      size={17}
-                      className="shrink-0 text-[#8B2E2E]"
+                    <span
+                      className={`h-7 w-7 shrink-0 rounded-full ${theme.preview}`}
                     />
-                  )}
 
-                </button>
-              ))}
+                    <span className="min-w-0 flex-1">
+
+                      <span className="block truncate text-xs font-semibold text-[#2B1714]">
+                        {theme.name}
+                      </span>
+
+                      <span className="block truncate text-[10px] text-gray-400">
+                        {theme.description}
+                      </span>
+
+                    </span>
+
+                    {selectedTheme ===
+                      theme.id && (
+                      <Check
+                        size={17}
+                        className="shrink-0 text-[#8B2E2E]"
+                      />
+                    )}
+
+                  </button>
+                )
+              )}
 
             </div>
 
@@ -1523,7 +1699,8 @@ function AdminDashboard() {
 
         <div className="overflow-hidden bg-white shadow-sm">
 
-          {recentNotifications.length === 0 ? (
+          {recentNotifications.length ===
+          0 ? (
 
             <div className="p-10 text-center">
 
@@ -1544,13 +1721,17 @@ function AdminDashboard() {
               (notification) => (
 
                 <Link
-                  key={notification.id}
+                  key={
+                    notification.id
+                  }
                   to="/admin/requests"
                   className="flex items-center gap-4 border-b border-[#6B1E1E]/10 p-5 transition last:border-b-0 hover:bg-[#F8F1E7]"
                 >
 
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F5E4E4] text-[#8B2E2E]">
-                    <Bell size={18} />
+                    <Bell
+                      size={18}
+                    />
                   </div>
 
                   <div className="min-w-0 flex-1">

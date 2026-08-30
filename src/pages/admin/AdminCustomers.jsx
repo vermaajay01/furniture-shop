@@ -46,16 +46,16 @@ function AdminCustomers() {
   // ======================================================
 
   useEffect(() => {
-    const usersQuery = query(
-      collection(db, "users"),
+    const customersQuery = query(
+      collection(db, "customers"),
       orderBy("createdAt", "desc")
     );
 
     const unsubscribe =
       onSnapshot(
-        usersQuery,
+        customersQuery,
         (snapshot) => {
-          const users =
+          const customerList =
             snapshot.docs.map(
               (item) => ({
                 id: item.id,
@@ -63,10 +63,14 @@ function AdminCustomers() {
               })
             );
 
-          setCustomers(users);
+          setCustomers(
+            customerList
+          );
 
-          // Load order counts / totals for the customers.
-          // Orders created by the updated Cart contain userId.
+          // ==================================================
+          // LOAD ORDER COUNTS / TOTALS
+          // ==================================================
+
           getDocs(
             collection(db, "orders")
           )
@@ -94,12 +98,17 @@ function AdminCustomers() {
                   }
 
                   stats[uid].count += 1;
+
                   stats[uid].total +=
-                    Number(order.total || 0);
+                    Number(
+                      order.total || 0
+                    );
                 }
               );
 
-              setOrderStats(stats);
+              setOrderStats(
+                stats
+              );
             })
             .catch((error) => {
               console.error(
@@ -121,25 +130,33 @@ function AdminCustomers() {
         }
       );
 
-    return () => unsubscribe();
+    return () =>
+      unsubscribe();
   }, []);
 
   // ======================================================
   // FORMAT DATE
   // ======================================================
 
-  const formatDate = (value) => {
+  const formatDate = (
+    value
+  ) => {
     if (!value) {
       return "—";
     }
 
     try {
       const date =
-        typeof value?.toDate === "function"
+        typeof value?.toDate ===
+        "function"
           ? value.toDate()
           : new Date(value);
 
-      if (Number.isNaN(date.getTime())) {
+      if (
+        Number.isNaN(
+          date.getTime()
+        )
+      ) {
         return "—";
       }
 
@@ -161,31 +178,37 @@ function AdminCustomers() {
   // ======================================================
 
   const normalizedSearch =
-    search.trim().toLowerCase();
+    search
+      .trim()
+      .toLowerCase();
 
   const filteredCustomers =
-    customers.filter((customer) => {
-      if (!normalizedSearch) {
-        return true;
+    customers.filter(
+      (customer) => {
+        if (!normalizedSearch) {
+          return true;
+        }
+
+        const values = [
+          customer.name,
+          customer.displayName,
+          customer.email,
+          customer.phone,
+          customer.mobile,
+          customer.id,
+          customer.uid,
+        ];
+
+        return values.some(
+          (value) =>
+            String(value || "")
+              .toLowerCase()
+              .includes(
+                normalizedSearch
+              )
+        );
       }
-
-      const values = [
-        customer.name,
-        customer.displayName,
-        customer.email,
-        customer.phone,
-        customer.mobile,
-        customer.id,
-        customer.uid,
-      ];
-
-      return values.some(
-        (value) =>
-          String(value || "")
-            .toLowerCase()
-            .includes(normalizedSearch)
-      );
-    });
+    );
 
   // ======================================================
   // LOADING
@@ -199,6 +222,7 @@ function AdminCustomers() {
             size={24}
             className="animate-spin"
           />
+
           Loading customers...
         </div>
       </div>
@@ -233,6 +257,7 @@ function AdminCustomers() {
         </div>
 
         <div className="flex items-center gap-3 bg-white px-5 py-3 shadow-sm">
+
           <Users
             size={21}
             className="text-[#8B2E2E]"
@@ -245,6 +270,7 @@ function AdminCustomers() {
           <span className="text-sm text-gray-500">
             Registered
           </span>
+
         </div>
 
       </div>
@@ -264,7 +290,9 @@ function AdminCustomers() {
           type="text"
           value={search}
           onChange={(event) =>
-            setSearch(event.target.value)
+            setSearch(
+              event.target.value
+            )
           }
           placeholder="Search by name, email, phone or user ID..."
           className="w-full border border-gray-200 bg-white py-3 pl-11 pr-4 outline-none transition focus:border-[#8B2E2E]"
@@ -278,7 +306,8 @@ function AdminCustomers() {
 
       <div className="overflow-hidden bg-white shadow-sm">
 
-        {filteredCustomers.length === 0 ? (
+        {filteredCustomers.length ===
+        0 ? (
           <div className="px-6 py-16 text-center">
 
             <Users
@@ -301,6 +330,7 @@ function AdminCustomers() {
             <table className="w-full min-w-[850px]">
 
               <thead>
+
                 <tr className="border-b border-gray-100 bg-[#F8F1E7] text-left text-xs uppercase tracking-wider text-gray-500">
 
                   <th className="px-5 py-4">
@@ -332,6 +362,7 @@ function AdminCustomers() {
                   </th>
 
                 </tr>
+
               </thead>
 
               <tbody>
@@ -342,6 +373,8 @@ function AdminCustomers() {
                       key={customer.id}
                       className="border-b border-gray-100 last:border-0 hover:bg-gray-50"
                     >
+
+                      {/* CUSTOMER */}
 
                       <td className="px-5 py-4">
 
@@ -377,6 +410,8 @@ function AdminCustomers() {
 
                       </td>
 
+                      {/* CONTACT */}
+
                       <td className="px-5 py-4">
 
                         <p className="text-sm text-gray-700">
@@ -387,9 +422,12 @@ function AdminCustomers() {
 
                       </td>
 
+                      {/* REGISTERED */}
+
                       <td className="px-5 py-4">
 
                         <div className="flex items-center gap-2 text-sm text-gray-600">
+
                           <CalendarDays
                             size={15}
                             className="text-gray-400"
@@ -398,31 +436,51 @@ function AdminCustomers() {
                           {formatDate(
                             customer.createdAt
                           )}
+
                         </div>
 
                       </td>
 
+                      {/* ORDERS */}
+
                       <td className="px-5 py-4">
+
                         <p className="flex items-center gap-2 text-sm font-semibold text-[#6B1E1E]">
-                          <ShoppingBag size={15} />
+
+                          <ShoppingBag
+                            size={15}
+                          />
+
                           {orderStats[
                             customer.uid ||
                             customer.id
                           ]?.count || 0}
+
                         </p>
+
                       </td>
 
+                      {/* TOTAL SPENT */}
+
                       <td className="px-5 py-4">
+
                         <p className="text-sm font-semibold text-[#6B1E1E]">
+
                           ₹
                           {Number(
                             orderStats[
                               customer.uid ||
                               customer.id
                             ]?.total || 0
-                          ).toLocaleString("en-IN")}
+                          ).toLocaleString(
+                            "en-IN"
+                          )}
+
                         </p>
+
                       </td>
+
+                      {/* USER ID */}
 
                       <td className="max-w-[220px] px-5 py-4">
 
@@ -432,6 +490,8 @@ function AdminCustomers() {
                         </p>
 
                       </td>
+
+                      {/* ACTION */}
 
                       <td className="px-5 py-4 text-right">
 
@@ -447,6 +507,7 @@ function AdminCustomers() {
                           <Eye
                             size={16}
                           />
+
                           View
                         </button>
 
@@ -474,9 +535,12 @@ function AdminCustomers() {
 
           <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto bg-white shadow-2xl">
 
+            {/* HEADER */}
+
             <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
 
               <div>
+
                 <p className="text-xs uppercase tracking-wider text-[#B8863B]">
                   Customer Details
                 </p>
@@ -486,12 +550,15 @@ function AdminCustomers() {
                     selectedCustomer.displayName ||
                     "Customer"}
                 </h2>
+
               </div>
 
               <button
                 type="button"
                 onClick={() =>
-                  setSelectedCustomer(null)
+                  setSelectedCustomer(
+                    null
+                  )
                 }
                 className="rounded-full p-2 text-gray-500 hover:bg-gray-100"
                 aria-label="Close"
@@ -501,11 +568,16 @@ function AdminCustomers() {
 
             </div>
 
+            {/* DETAILS */}
+
             <div className="space-y-5 px-6 py-6">
+
+              {/* EMAIL + PHONE */}
 
               <div className="grid gap-4 sm:grid-cols-2">
 
                 <div className="border border-gray-100 p-4">
+
                   <Mail
                     size={18}
                     className="text-[#8B2E2E]"
@@ -519,9 +591,11 @@ function AdminCustomers() {
                     {selectedCustomer.email ||
                       "—"}
                   </p>
+
                 </div>
 
                 <div className="border border-gray-100 p-4">
+
                   <Phone
                     size={18}
                     className="text-[#8B2E2E]"
@@ -536,9 +610,12 @@ function AdminCustomers() {
                       selectedCustomer.mobile ||
                       "—"}
                   </p>
+
                 </div>
 
               </div>
+
+              {/* REGISTERED */}
 
               <div className="border border-gray-100 p-4">
 
@@ -558,6 +635,8 @@ function AdminCustomers() {
                 </p>
 
               </div>
+
+              {/* ORDERS */}
 
               <div className="border border-gray-100 p-4">
 
@@ -579,6 +658,8 @@ function AdminCustomers() {
 
               </div>
 
+              {/* TOTAL SPENT */}
+
               <div className="border border-gray-100 p-4">
 
                 <p className="text-xs text-gray-400">
@@ -592,10 +673,14 @@ function AdminCustomers() {
                       selectedCustomer.uid ||
                       selectedCustomer.id
                     ]?.total || 0
-                  ).toLocaleString("en-IN")}
+                  ).toLocaleString(
+                    "en-IN"
+                  )}
                 </p>
 
               </div>
+
+              {/* FIREBASE UID */}
 
               <div className="border border-gray-100 p-4">
 
