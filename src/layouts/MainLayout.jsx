@@ -1,5 +1,11 @@
-import { useEffect, useState } from "react";
-import { Outlet } from "react-router-dom";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  Outlet,
+} from "react-router-dom";
 
 import {
   MessageCircle,
@@ -11,38 +17,59 @@ import {
 } from "firebase/firestore";
 
 import Navbar from "../components/Navbar";
+import SiteNavigation from "../components/SiteNavigation";
 import Footer from "../components/Footer";
 import OfferBanner from "../components/OfferBanner";
 
-import { db } from "../firebase/firebase";
+import {
+  db,
+} from "../firebase/firebase";
 
 function MainLayout() {
-  const [whatsappNumber, setWhatsappNumber] =
-    useState("919596492640");
+
+  const [
+    whatsappNumber,
+    setWhatsappNumber,
+  ] = useState(
+    "919596492640"
+  );
+
+  const [
+    menuOpen,
+    setMenuOpen,
+  ] = useState(false);
 
   // ======================================================
-  // LOAD WHATSAPP NUMBER
+  // WHATSAPP
   // ======================================================
 
   useEffect(() => {
-    const settingsRef = doc(
-      db,
-      "settings",
-      "website"
-    );
+
+    const settingsRef =
+      doc(
+        db,
+        "settings",
+        "website"
+      );
 
     const unsubscribe =
       onSnapshot(
         settingsRef,
         (snapshot) => {
-          if (!snapshot.exists()) {
+
+          if (
+            !snapshot.exists()
+          ) {
             return;
           }
 
           const data =
             snapshot.data();
 
-          if (data.whatsapp) {
+          if (
+            data.whatsapp
+          ) {
+
             const cleanNumber =
               String(
                 data.whatsapp
@@ -51,7 +78,9 @@ function MainLayout() {
                 ""
               );
 
-            if (cleanNumber) {
+            if (
+              cleanNumber
+            ) {
               setWhatsappNumber(
                 cleanNumber
               );
@@ -66,35 +95,47 @@ function MainLayout() {
         }
       );
 
-    return () => unsubscribe();
+    return () =>
+      unsubscribe();
+
   }, []);
 
   const whatsappUrl =
     `https://wa.me/${whatsappNumber}`;
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="min-h-screen bg-[#FFFCF8]">
 
       {/* ==================================================
-          FIXED NAVBAR
+          SIDEBAR
       ================================================== */}
 
-      <Navbar />
+      <SiteNavigation
+        open={menuOpen}
+        onClose={() =>
+          setMenuOpen(false)
+        }
+      />
 
       {/* ==================================================
-          CONTENT AREA
-          Navbar height = 82px
+          HEADER
       ================================================== */}
 
-      <div className="pt-[82px]">
+      <Navbar
+        onMenuClick={() =>
+          setMenuOpen(true)
+        }
+      />
 
-        {/* OFFER BANNER */}
+      {/* ==================================================
+          CONTENT
+      ================================================== */}
+
+      <div className="pt-[78px]">
 
         <OfferBanner />
 
-        {/* PAGE CONTENT */}
-
-        <main className="flex-1">
+        <main className="min-h-[60vh]">
           <Outlet />
         </main>
 
@@ -103,8 +144,7 @@ function MainLayout() {
       <Footer />
 
       {/* ==================================================
-          FLOATING WHATSAPP BUTTON
-          Visible on all customer pages
+          WHATSAPP
       ================================================== */}
 
       <a
@@ -113,13 +153,12 @@ function MainLayout() {
         rel="noopener noreferrer"
         aria-label="Chat with us on WhatsApp"
         title="Chat with us on WhatsApp"
-        className="fixed bottom-5 right-5 z-[90] flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_25px_rgba(0,0,0,0.22)] transition duration-300 hover:-translate-y-1 hover:scale-105 hover:shadow-[0_12px_30px_rgba(0,0,0,0.28)] sm:bottom-6 sm:right-6 sm:h-16 sm:w-16"
+        className="fixed bottom-5 right-5 z-[90] flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition hover:-translate-y-1 hover:scale-105 sm:bottom-6 sm:right-6 sm:h-16 sm:w-16"
       >
 
         <MessageCircle
           size={29}
           strokeWidth={2.2}
-          className="sm:h-8 sm:w-8"
         />
 
         <span className="sr-only">

@@ -21,6 +21,13 @@ import {
 } from "../firebase/firebase";
 
 // ======================================================
+// ADMIN UID
+// ======================================================
+
+const ADMIN_UID =
+  "LIgw6OZ6uaOB27EJiONu55tClUh1";
+
+// ======================================================
 // AUTH CONTEXT
 // ======================================================
 
@@ -55,28 +62,40 @@ export function AuthProvider({
           try {
             setUser(currentUser);
 
-            if (currentUser) {
-              const profileRef =
-                doc(
-                  db,
-                  "customers",
-                  currentUser.uid
-                );
+            if (!currentUser) {
+              setProfile(null);
+              setLoading(false);
+              return;
+            }
 
-              const profileSnapshot =
-                await getDoc(
-                  profileRef
-                );
+            // Admin does not need a customer profile.
+            if (
+              currentUser.uid ===
+              ADMIN_UID
+            ) {
+              setProfile(null);
+              setLoading(false);
+              return;
+            }
 
-              if (
-                profileSnapshot.exists()
-              ) {
-                setProfile(
-                  profileSnapshot.data()
-                );
-              } else {
-                setProfile(null);
-              }
+            const profileRef =
+              doc(
+                db,
+                "customers",
+                currentUser.uid
+              );
+
+            const profileSnapshot =
+              await getDoc(
+                profileRef
+              );
+
+            if (
+              profileSnapshot.exists()
+            ) {
+              setProfile(
+                profileSnapshot.data()
+              );
             } else {
               setProfile(null);
             }
@@ -98,6 +117,23 @@ export function AuthProvider({
   }, []);
 
   // ====================================================
+  // ROLE
+  // ====================================================
+
+  const isAdmin =
+    !!user &&
+    user.uid === ADMIN_UID;
+
+  const isCustomer =
+    !!user && !isAdmin;
+
+  const role = !user
+    ? "guest"
+    : isAdmin
+      ? "admin"
+      : "customer";
+
+  // ====================================================
   // LOGOUT
   // ====================================================
 
@@ -113,7 +149,16 @@ export function AuthProvider({
     user,
     profile,
     loading,
-    isLoggedIn: !!user,
+
+    isLoggedIn:
+      !!user,
+
+    isAdmin,
+
+    isCustomer,
+
+    role,
+
     logout,
   };
 

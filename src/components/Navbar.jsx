@@ -1,4 +1,8 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import {
   Link,
   useNavigate,
@@ -9,11 +13,10 @@ import {
   X,
   Search,
   ShoppingCart,
-  ShieldCheck,
-  ArrowRight,
   User,
   Bell,
   Heart,
+  ArrowRight,
 } from "lucide-react";
 
 import {
@@ -25,59 +28,84 @@ import {
 
 import { db } from "../firebase/firebase";
 
-import { useCart } from "../context/CartContext";
-import { useAuth } from "../context/AuthContext";
-import { useWishlist } from "../context/WishlistContext";
+import {
+  useCart,
+} from "../context/CartContext";
 
-function Navbar() {
-  const navigate = useNavigate();
+import {
+  useAuth,
+} from "../context/AuthContext";
 
-  const { cartCount } = useCart();
+import {
+  useWishlist,
+} from "../context/WishlistContext";
 
-  const { user } = useAuth();
+function Navbar({
+  onMenuClick,
+}) {
+  const navigate =
+    useNavigate();
 
-  const { wishlist } = useWishlist();
+  const {
+    cartCount,
+  } = useCart();
+
+  const {
+    user,
+    isAdmin,
+    role,
+  } = useAuth();
+
+  const {
+    wishlist,
+  } = useWishlist();
 
   const wishlistCount =
     wishlist.length;
 
-  const [unreadNotificationCount, setUnreadNotificationCount] =
-    useState(0);
+  const [
+    unreadNotificationCount,
+    setUnreadNotificationCount,
+  ] = useState(0);
 
-  const [menuOpen, setMenuOpen] =
-    useState(false);
+  const [
+    searchOpen,
+    setSearchOpen,
+  ] = useState(false);
 
-  const [searchOpen, setSearchOpen] =
-    useState(false);
-
-  const [searchText, setSearchText] =
-    useState("");
-
-  const closeMenu = () => {
-    setMenuOpen(false);
-  };
+  const [
+    searchText,
+    setSearchText,
+  ] = useState("");
 
   // ======================================================
   // CUSTOMER NOTIFICATIONS
   // ======================================================
 
   useEffect(() => {
-    if (!user) {
-      setUnreadNotificationCount(0);
+    if (
+      !user ||
+      isAdmin
+    ) {
+      setUnreadNotificationCount(
+        0
+      );
+
       return;
     }
 
-    const notificationsQuery = query(
-      collection(
-        db,
-        "customerNotifications"
-      ),
-      where(
-        "userId",
-        "==",
-        user.uid
-      )
-    );
+    const notificationsQuery =
+      query(
+        collection(
+          db,
+          "customerNotifications"
+        ),
+        where(
+          "userId",
+          "==",
+          user.uid
+        )
+      );
 
     const unsubscribe =
       onSnapshot(
@@ -86,7 +114,8 @@ function Navbar() {
           const unread =
             snapshot.docs.filter(
               (item) =>
-                item.data().read !== true
+                item.data()
+                  .read !== true
             ).length;
 
           setUnreadNotificationCount(
@@ -99,36 +128,30 @@ function Navbar() {
             error
           );
 
-          setUnreadNotificationCount(0);
+          setUnreadNotificationCount(
+            0
+          );
         }
       );
 
-    return () => unsubscribe();
-  }, [user]);
-
-  const openWishlist = () => {
-    if (user) {
-      navigate("/account/wishlist");
-    } else {
-      navigate("/login");
-    }
-
-    closeMenu();
-  };
-
-  const openNotifications = () => {
-    navigate("/account/notifications");
-    closeMenu();
-  };
+    return () =>
+      unsubscribe();
+  }, [
+    user,
+    isAdmin,
+  ]);
 
   // ======================================================
   // SEARCH
   // ======================================================
 
-  const handleSearch = (e) => {
-    e.preventDefault();
+  const handleSearch = (
+    event
+  ) => {
+    event.preventDefault();
 
-    const value = searchText.trim();
+    const value =
+      searchText.trim();
 
     if (!value) {
       navigate("/shop");
@@ -142,12 +165,6 @@ function Navbar() {
 
     setSearchOpen(false);
     setSearchText("");
-    closeMenu();
-  };
-
-  const openSearch = () => {
-    setSearchOpen(true);
-    setMenuOpen(false);
   };
 
   // ======================================================
@@ -156,32 +173,29 @@ function Navbar() {
 
   const openCart = () => {
     navigate("/cart");
-    closeMenu();
   };
 
   // ======================================================
-  // CUSTOMER ACCOUNT / LOGIN
+  // ACCOUNT
   // ======================================================
 
   const openAccount = () => {
+    if (isAdmin) {
+      navigate("/admin");
+      return;
+    }
+
     if (user) {
-      // Customer account page will be added in the next step.
       navigate("/account");
     } else {
       navigate("/login");
     }
-
-    closeMenu();
   };
 
   return (
-    <header className="fixed top-0 z-50 w-full border-b border-[#6B1E1E]/15 bg-[#F8F1E7]/95 shadow-sm backdrop-blur-md">
+    <header className="fixed top-0 z-50 w-full border-b border-[#6B1E1E]/10 bg-[#FFFCF8]/95 shadow-sm backdrop-blur-md">
 
-      {/* ==================================================
-          MAIN NAVBAR
-      ================================================== */}
-
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+      <div className="mx-auto flex h-[78px] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
 
         {/* ==================================================
             LOGO
@@ -189,65 +203,64 @@ function Navbar() {
 
         <Link
           to="/"
-          onClick={closeMenu}
-          className="cursor-pointer"
+          className="shrink-0"
         >
-          <h1 className="text-2xl font-bold tracking-wide text-[#6B1E1E]">
+          <h1 className="text-xl font-bold tracking-wide text-[#6B1E1E] sm:text-2xl">
             हरि{" "}
             <span className="text-[#B8863B]">
               ॐ
             </span>
           </h1>
 
-          <p className="text-[10px] font-medium tracking-[0.35em] text-[#6B1E1E]">
+          <p className="text-[8px] font-semibold tracking-[0.28em] text-[#6B1E1E] sm:text-[10px]">
             FURNITURE HOUSE
           </p>
         </Link>
 
         {/* ==================================================
-            DESKTOP NAVIGATION
+            DESKTOP NAV
         ================================================== */}
 
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="hidden items-center gap-6 lg:flex xl:gap-8">
 
           <Link
             to="/"
-            className="transition hover:text-[#8B2E2E]"
+            className="text-sm font-medium text-gray-700 transition hover:text-[#8B2E2E]"
           >
             Home
           </Link>
 
           <Link
             to="/shop"
-            className="transition hover:text-[#8B2E2E]"
+            className="text-sm font-medium text-gray-700 transition hover:text-[#8B2E2E]"
           >
             Shop
           </Link>
 
           <a
             href="/#categories"
-            className="transition hover:text-[#8B2E2E]"
+            className="text-sm font-medium text-gray-700 transition hover:text-[#8B2E2E]"
           >
             Categories
           </a>
 
           <Link
             to="/custom-furniture"
-            className="transition hover:text-[#8B2E2E]"
+            className="text-sm font-medium text-gray-700 transition hover:text-[#8B2E2E]"
           >
             Custom Furniture
           </Link>
 
           <a
             href="/#about"
-            className="transition hover:text-[#8B2E2E]"
+            className="text-sm font-medium text-gray-700 transition hover:text-[#8B2E2E]"
           >
             About
           </a>
 
           <a
             href="/#contact"
-            className="transition hover:text-[#8B2E2E]"
+            className="text-sm font-medium text-gray-700 transition hover:text-[#8B2E2E]"
           >
             Contact
           </a>
@@ -255,263 +268,149 @@ function Navbar() {
         </nav>
 
         {/* ==================================================
-            DESKTOP ACTIONS
+            ACTIONS
         ================================================== */}
 
-        <div className="hidden items-center gap-5 md:flex">
+        <div className="flex items-center gap-1 sm:gap-2">
 
           {/* SEARCH */}
 
           <button
             type="button"
-            aria-label="Search"
-            title="Search"
-            onClick={openSearch}
-            className="transition hover:text-[#8B2E2E]"
-          >
-            <Search size={20} />
-          </button>
-
-          {/* CART */}
-
-          <div className="relative">
-
-            <button
-              type="button"
-              aria-label="Shopping cart"
-              title="Shopping Cart"
-              onClick={openCart}
-              className="transition hover:text-[#8B2E2E]"
-            >
-              <ShoppingCart size={20} />
-            </button>
-
-            {cartCount > 0 && (
-              <span className="absolute -right-3 -top-3 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#8B2E2E] px-1 text-[10px] font-bold text-white">
-                {cartCount > 99
-                  ? "99+"
-                  : cartCount}
-              </span>
-            )}
-
-          </div>
-
-          {/* CUSTOMER WISHLIST */}
-
-          {user && (
-            <button
-              type="button"
-              onClick={openWishlist}
-              aria-label="Wishlist"
-              title="Wishlist"
-              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[#6B1E1E]/15 text-[#6B1E1E] transition hover:border-[#8B2E2E] hover:bg-[#8B2E2E] hover:text-white"
-            >
-              <Heart
-                size={18}
-                fill="none"
-              />
-
-              {wishlistCount > 0 && (
-                <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#8B2E2E] px-1 text-[10px] font-bold text-white">
-                  {wishlistCount > 99
-                    ? "99+"
-                    : wishlistCount}
-                </span>
-              )}
-            </button>
-          )}
-
-          {/* CUSTOMER NOTIFICATIONS */}
-
-          {user && (
-            <button
-              type="button"
-              onClick={openNotifications}
-              aria-label="Notifications"
-              title="Notifications"
-              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[#6B1E1E]/15 text-[#6B1E1E] transition hover:border-[#8B2E2E] hover:bg-[#8B2E2E] hover:text-white"
-            >
-              <Bell size={18} />
-
-              {unreadNotificationCount > 0 && (
-                <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#8B2E2E] px-1 text-[10px] font-bold text-white">
-                  {unreadNotificationCount > 99
-                    ? "99+"
-                    : unreadNotificationCount}
-                </span>
-              )}
-            </button>
-          )}
-
-          {/* CUSTOMER ACCOUNT / LOGIN */}
-
-          <button
-            type="button"
-            onClick={openAccount}
-            aria-label={
-              user
-                ? "My Account"
-                : "Customer Login"
-            }
-            title={
-              user
-                ? "My Account"
-                : "Login"
-            }
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#6B1E1E]/15 text-[#6B1E1E] transition hover:border-[#8B2E2E] hover:bg-[#8B2E2E] hover:text-white"
-          >
-            <User size={18} />
-          </button>
-
-          {/* ADMIN */}
-
-          <Link
-            to="/admin"
-            aria-label="Admin login"
-            title="Admin"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#6B1E1E]/15 text-[#6B1E1E] transition hover:border-[#8B2E2E] hover:bg-[#8B2E2E] hover:text-white"
-          >
-            <ShieldCheck size={18} />
-          </Link>
-
-        </div>
-
-        {/* ==================================================
-            MOBILE ACTIONS
-        ================================================== */}
-
-        <div className="flex items-center gap-2 md:hidden">
-
-          {/* SEARCH */}
-
-          <button
-            type="button"
-            onClick={openSearch}
-            aria-label="Search"
-            className="flex h-9 w-9 items-center justify-center text-[#6B1E1E]"
-          >
-            <Search size={20} />
-          </button>
-
-          {/* CART */}
-
-          <div className="relative">
-
-            <button
-              type="button"
-              onClick={openCart}
-              aria-label="Shopping cart"
-              className="flex h-9 w-9 items-center justify-center text-[#6B1E1E]"
-            >
-              <ShoppingCart size={20} />
-            </button>
-
-            {cartCount > 0 && (
-              <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#8B2E2E] px-1 text-[9px] font-bold text-white">
-                {cartCount > 99
-                  ? "99+"
-                  : cartCount}
-              </span>
-            )}
-
-          </div>
-
-          {/* CUSTOMER WISHLIST */}
-
-          {user && (
-            <button
-              type="button"
-              onClick={openWishlist}
-              aria-label="Wishlist"
-              title="Wishlist"
-              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[#6B1E1E]/15 text-[#6B1E1E] transition hover:border-[#8B2E2E] hover:bg-[#8B2E2E] hover:text-white"
-            >
-              <Heart
-                size={18}
-                fill="none"
-              />
-
-              {wishlistCount > 0 && (
-                <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#8B2E2E] px-1 text-[10px] font-bold text-white">
-                  {wishlistCount > 99
-                    ? "99+"
-                    : wishlistCount}
-                </span>
-              )}
-            </button>
-          )}
-
-          {/* CUSTOMER NOTIFICATIONS */}
-
-          {user && (
-            <button
-              type="button"
-              onClick={openNotifications}
-              aria-label="Notifications"
-              title="Notifications"
-              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[#6B1E1E]/15 text-[#6B1E1E]"
-            >
-              <Bell size={18} />
-
-              {unreadNotificationCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#8B2E2E] px-1 text-[9px] font-bold text-white">
-                  {unreadNotificationCount > 99
-                    ? "99+"
-                    : unreadNotificationCount}
-                </span>
-              )}
-            </button>
-          )}
-
-          {/* CUSTOMER ACCOUNT / LOGIN */}
-
-          <button
-            type="button"
-            onClick={openAccount}
-            aria-label={
-              user
-                ? "My Account"
-                : "Customer Login"
-            }
-            title={
-              user
-                ? "My Account"
-                : "Login"
-            }
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#6B1E1E]/15 text-[#6B1E1E]"
-          >
-            <User size={18} />
-          </button>
-
-          {/* ADMIN */}
-
-          <Link
-            to="/admin"
-            onClick={closeMenu}
-            aria-label="Admin login"
-            title="Admin"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#6B1E1E]/15 text-[#6B1E1E]"
-          >
-            <ShieldCheck size={18} />
-          </Link>
-
-          {/* MENU */}
-
-          <button
-            type="button"
-            className="flex h-9 w-9 items-center justify-center text-[#6B1E1E]"
             onClick={() =>
-              setMenuOpen(
-                (previous) => !previous
+              setSearchOpen(
+                true
               )
             }
-            aria-label="Toggle menu"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-[#6B1E1E] transition hover:bg-[#F8F1E7]"
+            aria-label="Search"
           >
-            {menuOpen ? (
-              <X size={24} />
-            ) : (
-              <Menu size={24} />
+            <Search
+              size={20}
+            />
+          </button>
+
+          {/* CART */}
+
+          <button
+            type="button"
+            onClick={
+              openCart
+            }
+            className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#6B1E1E] transition hover:bg-[#F8F1E7]"
+            aria-label="Shopping cart"
+          >
+
+            <ShoppingCart
+              size={20}
+            />
+
+            {cartCount >
+              0 && (
+              <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#8B2E2E] px-1 text-[9px] font-bold text-white">
+                {cartCount >
+                99
+                  ? "99+"
+                  : cartCount}
+              </span>
             )}
+
+          </button>
+
+          {/* WISHLIST */}
+
+          {user &&
+            !isAdmin && (
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    "/account/wishlist"
+                  )
+                }
+                className="relative hidden h-10 w-10 items-center justify-center rounded-full text-[#6B1E1E] transition hover:bg-[#F8F1E7] sm:flex"
+                aria-label="Wishlist"
+              >
+
+                <Heart
+                  size={19}
+                />
+
+                {wishlistCount >
+                  0 && (
+                  <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#8B2E2E] px-1 text-[9px] font-bold text-white">
+                    {wishlistCount >
+                    99
+                      ? "99+"
+                      : wishlistCount}
+                  </span>
+                )}
+
+              </button>
+            )}
+
+          {/* NOTIFICATIONS */}
+
+          {user &&
+            !isAdmin && (
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    "/account/notifications"
+                  )
+                }
+                className="relative hidden h-10 w-10 items-center justify-center rounded-full text-[#6B1E1E] transition hover:bg-[#F8F1E7] sm:flex"
+                aria-label="Notifications"
+              >
+
+                <Bell
+                  size={19}
+                />
+
+                {unreadNotificationCount >
+                  0 && (
+                  <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#8B2E2E] px-1 text-[9px] font-bold text-white">
+                    {unreadNotificationCount >
+                    99
+                      ? "99+"
+                      : unreadNotificationCount}
+                  </span>
+                )}
+
+              </button>
+            )}
+
+          {/* ACCOUNT */}
+
+          <button
+            type="button"
+            onClick={
+              openAccount
+            }
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#6B1E1E]/15 text-[#6B1E1E] transition hover:bg-[#6B1E1E] hover:text-white"
+            aria-label="Account"
+          >
+            {isAdmin ? (
+              <User size={18} />
+            ) : (
+              <User size={18} />
+            )}
+          </button>
+
+          {/* MOBILE MENU */}
+
+          <button
+            type="button"
+            onClick={
+              onMenuClick
+            }
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#6B1E1E] text-white transition hover:bg-[#8B2E2E] lg:hidden"
+            aria-label="Open menu"
+          >
+            <Menu
+              size={21}
+            />
           </button>
 
         </div>
@@ -525,53 +424,68 @@ function Navbar() {
       {searchOpen && (
         <div className="border-t border-[#6B1E1E]/10 bg-[#F8F1E7]">
 
-          <div className="mx-auto max-w-7xl px-6 py-5">
+          <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
 
             <form
-              onSubmit={handleSearch}
-              className="flex gap-3"
+              onSubmit={
+                handleSearch
+              }
+              className="flex gap-2"
             >
 
               <div className="relative flex-1">
 
                 <Search
-                  size={19}
+                  size={18}
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
                 />
 
                 <input
                   autoFocus
                   type="text"
-                  value={searchText}
-                  onChange={(e) =>
+                  value={
+                    searchText
+                  }
+                  onChange={(
+                    event
+                  ) =>
                     setSearchText(
-                      e.target.value
+                      event.target
+                        .value
                     )
                   }
                   placeholder="Search sofas, beds, tables..."
-                  className="w-full border border-gray-200 bg-white py-3.5 pl-11 pr-4 text-sm outline-none transition focus:border-[#8B2E2E] focus:ring-1 focus:ring-[#8B2E2E]"
+                  className="w-full rounded-lg border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm outline-none focus:border-[#8B2E2E]"
                 />
 
               </div>
 
               <button
                 type="submit"
-                className="flex items-center gap-2 bg-[#6B1E1E] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#8B2E2E]"
+                className="flex items-center gap-2 rounded-lg bg-[#6B1E1E] px-5 py-3 text-sm font-semibold text-white hover:bg-[#8B2E2E]"
               >
                 Search
-                <ArrowRight size={17} />
+                <ArrowRight
+                  size={16}
+                />
               </button>
 
               <button
                 type="button"
                 onClick={() => {
-                  setSearchOpen(false);
-                  setSearchText("");
+                  setSearchOpen(
+                    false
+                  );
+                  setSearchText(
+                    ""
+                  );
                 }}
-                className="flex h-12 w-12 items-center justify-center border border-gray-200 bg-white text-gray-500 transition hover:text-[#8B2E2E]"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white text-gray-500"
                 aria-label="Close search"
               >
-                <X size={20} />
+                <X
+                  size={19}
+                />
               </button>
 
             </form>
@@ -579,104 +493,6 @@ function Navbar() {
           </div>
 
         </div>
-      )}
-
-      {/* ==================================================
-          MOBILE NAVIGATION
-      ================================================== */}
-
-      {menuOpen && (
-        <nav className="border-t border-[#6B1E1E]/10 bg-[#F8F1E7] px-6 py-5 md:hidden">
-
-          <div className="flex flex-col gap-5">
-
-            <Link
-              to="/"
-              onClick={closeMenu}
-              className="transition hover:text-[#8B2E2E]"
-            >
-              Home
-            </Link>
-
-            <Link
-              to="/shop"
-              onClick={closeMenu}
-              className="transition hover:text-[#8B2E2E]"
-            >
-              Shop
-            </Link>
-
-            <a
-              href="/#categories"
-              onClick={closeMenu}
-              className="transition hover:text-[#8B2E2E]"
-            >
-              Categories
-            </a>
-
-            <Link
-              to="/custom-furniture"
-              onClick={closeMenu}
-              className="transition hover:text-[#8B2E2E]"
-            >
-              Custom Furniture
-            </Link>
-
-            <a
-              href="/#about"
-              onClick={closeMenu}
-              className="transition hover:text-[#8B2E2E]"
-            >
-              About
-            </a>
-
-            <a
-              href="/#contact"
-              onClick={closeMenu}
-              className="transition hover:text-[#8B2E2E]"
-            >
-              Contact
-            </a>
-
-            {user && (
-              <button
-                type="button"
-                onClick={openWishlist}
-                className="flex items-center gap-2 text-left transition hover:text-[#8B2E2E]"
-              >
-                <Heart size={18} />
-                Wishlist
-                {wishlistCount > 0 && (
-                  <span className="rounded-full bg-[#8B2E2E] px-2 py-0.5 text-xs font-bold text-white">
-                    {wishlistCount > 99
-                      ? "99+"
-                      : wishlistCount}
-                  </span>
-                )}
-              </button>
-            )}
-
-            {user && (
-              <button
-                type="button"
-                onClick={openNotifications}
-                className="flex items-center gap-2 text-left transition hover:text-[#8B2E2E]"
-              >
-                <Bell size={18} />
-                Notifications
-                {unreadNotificationCount > 0 && (
-                  <span className="rounded-full bg-[#8B2E2E] px-2 py-0.5 text-xs font-bold text-white">
-                    {unreadNotificationCount > 99
-                      ? "99+"
-                      : unreadNotificationCount}
-                  </span>
-                )}
-              </button>
-            )}
-
-          </div>
-
-        </nav>
       )}
 
     </header>
