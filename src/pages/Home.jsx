@@ -1032,11 +1032,11 @@ function Home() {
         className="px-6 py-24"
       >
 
-        <div className="mx-auto grid max-w-7xl overflow-hidden bg-[var(--site-dark)] md:grid-cols-2">
+        <div className="mx-auto grid max-w-7xl overflow-hidden bg-[#3A0D0D] md:grid-cols-2">
 
           <div className="p-10 text-white md:p-16">
 
-            <p className="mb-4 uppercase tracking-[0.3em] text-[var(--site-gold)]">
+            <p className="mb-4 uppercase tracking-[0.3em] text-[#E0B66B]">
               Made for you
             </p>
 
@@ -1055,7 +1055,7 @@ function Home() {
 
             <Link
               to="/custom-furniture"
-              className="mt-8 inline-flex items-center gap-2 bg-[var(--site-accent)] px-7 py-4 font-semibold transition hover:bg-[var(--site-primary)]"
+              className="mt-8 inline-flex items-center gap-2 bg-[#8B2E2E] px-7 py-4 font-semibold transition hover:bg-[#6B1E1E]"
             >
               Request Custom Quote
 
