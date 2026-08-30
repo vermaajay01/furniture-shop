@@ -53,7 +53,6 @@ function Navbar({
   const {
     user,
     isAdmin,
-    role,
   } = useAuth();
 
   const {
@@ -195,7 +194,7 @@ function Navbar({
   return (
     <header className="fixed top-0 z-50 w-full border-b border-[#6B1E1E]/10 bg-[#FFFCF8]/95 shadow-sm backdrop-blur-md">
 
-      <div className="mx-auto flex h-[78px] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+      <div className="mx-auto flex h-[78px] max-w-7xl items-center justify-between gap-3 px-3 sm:gap-4 sm:px-6">
 
         {/* ==================================================
             LOGO
@@ -212,16 +211,16 @@ function Navbar({
             </span>
           </h1>
 
-          <p className="text-[8px] font-semibold tracking-[0.28em] text-[#6B1E1E] sm:text-[10px]">
+          <p className="text-[7px] font-semibold tracking-[0.25em] text-[#6B1E1E] sm:text-[10px] sm:tracking-[0.28em]">
             FURNITURE HOUSE
           </p>
         </Link>
 
         {/* ==================================================
-            DESKTOP NAV
+            DESKTOP NAVIGATION
         ================================================== */}
 
-        <nav className="hidden items-center gap-6 lg:flex xl:gap-8">
+        <nav className="hidden items-center gap-5 lg:flex xl:gap-8">
 
           <Link
             to="/"
@@ -273,24 +272,27 @@ function Navbar({
 
         <div className="flex items-center gap-1 sm:gap-2">
 
-          {/* SEARCH */}
+          {/* ==================================================
+              SEARCH
+          ================================================== */}
 
           <button
             type="button"
             onClick={() =>
-              setSearchOpen(
-                true
-              )
+              setSearchOpen(true)
             }
             className="flex h-10 w-10 items-center justify-center rounded-full text-[#6B1E1E] transition hover:bg-[#F8F1E7]"
             aria-label="Search"
+            title="Search"
           >
             <Search
               size={20}
             />
           </button>
 
-          {/* CART */}
+          {/* ==================================================
+              CART
+          ================================================== */}
 
           <button
             type="button"
@@ -299,17 +301,16 @@ function Navbar({
             }
             className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#6B1E1E] transition hover:bg-[#F8F1E7]"
             aria-label="Shopping cart"
+            title="Shopping cart"
           >
 
             <ShoppingCart
               size={20}
             />
 
-            {cartCount >
-              0 && (
+            {cartCount > 0 && (
               <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#8B2E2E] px-1 text-[9px] font-bold text-white">
-                {cartCount >
-                99
+                {cartCount > 99
                   ? "99+"
                   : cartCount}
               </span>
@@ -317,7 +318,9 @@ function Navbar({
 
           </button>
 
-          {/* WISHLIST */}
+          {/* ==================================================
+              WISHLIST
+          ================================================== */}
 
           {user &&
             !isAdmin && (
@@ -330,6 +333,7 @@ function Navbar({
                 }
                 className="relative hidden h-10 w-10 items-center justify-center rounded-full text-[#6B1E1E] transition hover:bg-[#F8F1E7] sm:flex"
                 aria-label="Wishlist"
+                title="Wishlist"
               >
 
                 <Heart
@@ -349,7 +353,9 @@ function Navbar({
               </button>
             )}
 
-          {/* NOTIFICATIONS */}
+          {/* ==================================================
+              NOTIFICATIONS
+          ================================================== */}
 
           {user &&
             !isAdmin && (
@@ -362,6 +368,7 @@ function Navbar({
                 }
                 className="relative hidden h-10 w-10 items-center justify-center rounded-full text-[#6B1E1E] transition hover:bg-[#F8F1E7] sm:flex"
                 aria-label="Notifications"
+                title="Notifications"
               >
 
                 <Bell
@@ -381,7 +388,9 @@ function Navbar({
               </button>
             )}
 
-          {/* ACCOUNT */}
+          {/* ==================================================
+              ACCOUNT
+          ================================================== */}
 
           <button
             type="button"
@@ -390,23 +399,32 @@ function Navbar({
             }
             className="flex h-10 w-10 items-center justify-center rounded-full border border-[#6B1E1E]/15 text-[#6B1E1E] transition hover:bg-[#6B1E1E] hover:text-white"
             aria-label="Account"
+            title={
+              isAdmin
+                ? "Admin Dashboard"
+                : user
+                  ? "My Account"
+                  : "Login"
+            }
           >
-            {isAdmin ? (
-              <User size={18} />
-            ) : (
-              <User size={18} />
-            )}
+            <User
+              size={18}
+            />
           </button>
 
-          {/* MOBILE MENU */}
+          {/* ==================================================
+              SIDEBAR BUTTON
+              DESKTOP + MOBILE
+          ================================================== */}
 
           <button
             type="button"
             onClick={
               onMenuClick
             }
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#6B1E1E] text-white transition hover:bg-[#8B2E2E] lg:hidden"
-            aria-label="Open menu"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#6B1E1E] text-white transition hover:bg-[#8B2E2E] hover:shadow-md"
+            aria-label="Open sidebar"
+            title="Open sidebar"
           >
             <Menu
               size={21}
@@ -424,7 +442,7 @@ function Navbar({
       {searchOpen && (
         <div className="border-t border-[#6B1E1E]/10 bg-[#F8F1E7]">
 
-          <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
+          <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6">
 
             <form
               onSubmit={
@@ -462,9 +480,10 @@ function Navbar({
 
               <button
                 type="submit"
-                className="flex items-center gap-2 rounded-lg bg-[#6B1E1E] px-5 py-3 text-sm font-semibold text-white hover:bg-[#8B2E2E]"
+                className="flex items-center gap-2 rounded-lg bg-[#6B1E1E] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#8B2E2E]"
               >
                 Search
+
                 <ArrowRight
                   size={16}
                 />
@@ -476,12 +495,14 @@ function Navbar({
                   setSearchOpen(
                     false
                   );
+
                   setSearchText(
                     ""
                   );
                 }}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white text-gray-500"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white text-gray-500 transition hover:bg-gray-100"
                 aria-label="Close search"
+                title="Close search"
               >
                 <X
                   size={19}

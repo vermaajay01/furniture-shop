@@ -77,18 +77,14 @@ function SiteNavigation({
   const isActive = (
     path
   ) => {
-    if (
-      path === "/"
-    ) {
+    if (path === "/") {
       return (
-        location.pathname ===
-        "/"
+        location.pathname === "/"
       );
     }
 
     return (
-      location.pathname ===
-        path ||
+      location.pathname === path ||
       location.pathname.startsWith(
         `${path}/`
       )
@@ -124,7 +120,7 @@ function SiteNavigation({
     };
 
   // ======================================================
-  // LINK
+  // NAVIGATION LINK
   // ======================================================
 
   const NavigationLink = ({
@@ -410,7 +406,9 @@ function SiteNavigation({
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
 
-      {/* LOGO */}
+      {/* ==================================================
+          SIDEBAR HEADER
+      ================================================== */}
 
       <div className="flex items-center justify-between border-b border-[#6B1E1E]/10 px-5 py-5">
 
@@ -433,22 +431,25 @@ function SiteNavigation({
           </p>
         </Link>
 
-        {onClose && (
-          <button
-            type="button"
-            onClick={
-              closeNavigation
-            }
-            className="flex h-9 w-9 items-center justify-center rounded-full text-gray-500 hover:bg-[#F8F1E7] hover:text-[#6B1E1E] lg:hidden"
-            aria-label="Close navigation"
-          >
-            <X size={21} />
-          </button>
-        )}
+        {/* CLOSE BUTTON — DESKTOP + MOBILE */}
+
+        <button
+          type="button"
+          onClick={
+            closeNavigation
+          }
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-500 transition hover:bg-[#F8F1E7] hover:text-[#6B1E1E]"
+          aria-label="Close navigation"
+          title="Close sidebar"
+        >
+          <X size={21} />
+        </button>
 
       </div>
 
-      {/* USER */}
+      {/* ==================================================
+          USER
+      ================================================== */}
 
       {user && (
         <div className="border-b border-[#6B1E1E]/10 px-5 py-4">
@@ -489,7 +490,9 @@ function SiteNavigation({
         </div>
       )}
 
-      {/* MENU */}
+      {/* ==================================================
+          MENU
+      ================================================== */}
 
       <div className="flex-1 overflow-y-auto px-3 py-4">
 
@@ -507,7 +510,9 @@ function SiteNavigation({
 
       </div>
 
-      {/* BOTTOM */}
+      {/* ==================================================
+          BOTTOM
+      ================================================== */}
 
       <div className="border-t border-[#6B1E1E]/10 px-3 py-4">
 
@@ -540,12 +545,14 @@ function SiteNavigation({
   );
 
   // ======================================================
-  // DESKTOP + MOBILE
+  // SIDEBAR
   // ======================================================
 
   return (
     <>
-      {/* MOBILE OVERLAY */}
+      {/* ==================================================
+          BACKDROP
+      ================================================== */}
 
       {open && (
         <button
@@ -554,26 +561,16 @@ function SiteNavigation({
           onClick={
             closeNavigation
           }
-          className="fixed inset-0 z-[99] bg-black/40 lg:hidden"
+          className="fixed inset-0 z-[99] bg-black/40"
         />
       )}
 
-      {/* DESKTOP SIDEBAR */}
+      {/* ==================================================
+          DESKTOP SIDEBAR
+      ================================================== */}
 
       <aside
-        className={`fixed left-0 top-0 z-[100] hidden h-screen w-[280px] border-r border-[#6B1E1E]/10 bg-[#FFFCF8] shadow-sm lg:block ${
-          adminMode
-            ? ""
-            : ""
-        }`}
-      >
-        <SidebarContent />
-      </aside>
-
-      {/* MOBILE SIDEBAR */}
-
-      <aside
-        className={`fixed left-0 top-0 z-[110] h-screen w-[290px] bg-[#FFFCF8] shadow-2xl transition-transform duration-300 lg:hidden ${
+        className={`fixed left-0 top-0 z-[100] h-screen w-[280px] border-r border-[#6B1E1E]/10 bg-[#FFFCF8] shadow-2xl transition-transform duration-300 ${
           open
             ? "translate-x-0"
             : "-translate-x-full"

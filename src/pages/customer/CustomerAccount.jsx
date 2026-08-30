@@ -1,10 +1,5 @@
 import {
-  useState,
-} from "react";
-
-import {
   Link,
-  useNavigate,
 } from "react-router-dom";
 
 import {
@@ -12,11 +7,6 @@ import {
   Package,
   Heart,
   Bell,
-  MapPin,
-  Lock,
-  LogOut,
-  Menu,
-  X,
   ChevronRight,
 } from "lucide-react";
 
@@ -25,74 +15,10 @@ import {
 } from "../../context/AuthContext";
 
 function CustomerAccount() {
-  const navigate = useNavigate();
-
   const {
     user,
     profile,
-    logout,
   } = useAuth();
-
-  const [
-    sidebarOpen,
-    setSidebarOpen,
-  ] = useState(false);
-
-  // ======================================================
-  // LOGOUT
-  // ======================================================
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-
-      navigate("/", {
-        replace: true,
-      });
-    } catch (error) {
-      console.error(
-        "Logout failed:",
-        error
-      );
-    }
-  };
-
-  // ======================================================
-  // SIDEBAR ITEMS
-  // ======================================================
-
-  const menuItems = [
-    {
-      label: "My Account",
-      icon: User,
-      path: "/account",
-    },
-    {
-      label: "My Orders",
-      icon: Package,
-      path: "/account/orders",
-    },
-    {
-      label: "Wishlist",
-      icon: Heart,
-      path: "/account/wishlist",
-    },
-    {
-      label: "Notifications",
-      icon: Bell,
-      path: "/account/notifications",
-    },
-    {
-      label: "Addresses",
-      icon: MapPin,
-      path: "/account/addresses",
-    },
-    {
-      label: "Change Password",
-      icon: Lock,
-      path: "/account/password",
-    },
-  ];
 
   // ======================================================
   // NOT LOGGED IN
@@ -101,6 +27,7 @@ function CustomerAccount() {
   if (!user) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center bg-[#F8F1E7] px-4">
+
         <div className="w-full max-w-md bg-white p-8 text-center shadow-lg">
 
           <User
@@ -124,171 +51,25 @@ function CustomerAccount() {
           </Link>
 
         </div>
+
       </div>
     );
   }
 
+  // ======================================================
+  // ACCOUNT
+  // ======================================================
+
   return (
     <div className="min-h-[75vh] bg-[#F8F1E7]">
 
-      {/* ==================================================
-          MOBILE SIDEBAR BUTTON
-      ================================================== */}
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
 
-      <div className="border-b border-[#6B1E1E]/10 bg-white px-4 py-3 lg:hidden">
+        <main className="min-w-0">
 
-        <button
-          type="button"
-          onClick={() =>
-            setSidebarOpen(true)
-          }
-          className="flex items-center gap-3 font-semibold text-[#6B1E1E]"
-        >
-          <Menu size={21} />
-          My Account
-        </button>
-
-      </div>
-
-      <div className="mx-auto flex max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:px-8">
-
-        {/* ==================================================
-            SIDEBAR
-        ================================================== */}
-
-        <aside
-          className={`
-            fixed inset-y-0 left-0 z-[100]
-            w-72 transform bg-white shadow-2xl
-            transition-transform duration-300
-            lg:static lg:z-auto lg:w-72
-            lg:translate-x-0 lg:shadow-sm
-            ${
-              sidebarOpen
-                ? "translate-x-0"
-                : "-translate-x-full"
-            }
-          `}
-        >
-
-          {/* MOBILE CLOSE */}
-
-          <div className="flex items-center justify-between border-b border-gray-100 p-5 lg:hidden">
-
-            <span className="font-bold text-[#6B1E1E]">
-              My Account
-            </span>
-
-            <button
-              type="button"
-              onClick={() =>
-                setSidebarOpen(false)
-              }
-              aria-label="Close account menu"
-            >
-              <X size={22} />
-            </button>
-
-          </div>
-
-          {/* PROFILE HEADER */}
-
-          <div className="border-b border-gray-100 p-6">
-
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#F5E4E4] text-[#6B1E1E]">
-              <User size={28} />
-            </div>
-
-            <h2 className="mt-4 font-bold text-[#6B1E1E]">
-              {profile?.name ||
-                user.displayName ||
-                "Customer"}
-            </h2>
-
-            <p className="mt-1 truncate text-xs text-gray-500">
-              {profile?.email ||
-                user.email}
-            </p>
-
-          </div>
-
-          {/* MENU */}
-
-          <nav className="p-3">
-
-            {menuItems.map(
-              (item) => {
-                const Icon =
-                  item.icon;
-
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() =>
-                      setSidebarOpen(false)
-                    }
-                    className="mb-1 flex items-center justify-between rounded-lg px-4 py-3 text-sm font-medium text-gray-600 transition hover:bg-[#F8F1E7] hover:text-[#6B1E1E]"
-                  >
-
-                    <span className="flex items-center gap-3">
-
-                      <Icon
-                        size={19}
-                      />
-
-                      {item.label}
-
-                    </span>
-
-                    <ChevronRight
-                      size={16}
-                      className="text-gray-400"
-                    />
-
-                  </Link>
-                );
-              }
-            )}
-
-            {/* LOGOUT */}
-
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="mt-4 flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-semibold text-red-600 transition hover:bg-red-50"
-            >
-              <LogOut
-                size={19}
-              />
-
-              Logout
-            </button>
-
-          </nav>
-
-        </aside>
-
-        {/* ==================================================
-            MOBILE BACKDROP
-        ================================================== */}
-
-        {sidebarOpen && (
-          <button
-            type="button"
-            aria-label="Close account menu"
-            onClick={() =>
-              setSidebarOpen(false)
-            }
-            className="fixed inset-0 z-[90] bg-black/40 lg:hidden"
-          />
-        )}
-
-        {/* ==================================================
-            ACCOUNT CONTENT
-        ================================================== */}
-
-        <main className="min-w-0 flex-1">
+          {/* ==================================================
+              HEADER
+          ================================================== */}
 
           <div className="bg-white p-6 shadow-sm sm:p-8">
 
@@ -311,10 +92,14 @@ function CustomerAccount() {
           </div>
 
           {/* ==================================================
-              PROFILE
+              PROFILE + QUICK LINKS
           ================================================== */}
 
           <div className="mt-6 grid gap-5 sm:grid-cols-2">
+
+            {/* ==================================================
+                PERSONAL INFORMATION
+            ================================================== */}
 
             <div className="bg-white p-6 shadow-sm">
 
@@ -332,7 +117,10 @@ function CustomerAccount() {
 
               <div className="mt-5 space-y-3 text-sm">
 
+                {/* NAME */}
+
                 <div>
+
                   <p className="text-gray-400">
                     Name
                   </p>
@@ -342,9 +130,13 @@ function CustomerAccount() {
                       user.displayName ||
                       "—"}
                   </p>
+
                 </div>
 
+                {/* EMAIL */}
+
                 <div>
+
                   <p className="text-gray-400">
                     Email
                   </p>
@@ -354,9 +146,13 @@ function CustomerAccount() {
                       user.email ||
                       "—"}
                   </p>
+
                 </div>
 
+                {/* MOBILE */}
+
                 <div>
+
                   <p className="text-gray-400">
                     Mobile
                   </p>
@@ -365,6 +161,7 @@ function CustomerAccount() {
                     {profile?.mobile ||
                       "—"}
                   </p>
+
                 </div>
 
               </div>
@@ -372,7 +169,7 @@ function CustomerAccount() {
             </div>
 
             {/* ==================================================
-                QUICK LINKS
+                QUICK ACCESS
             ================================================== */}
 
             <div className="bg-white p-6 shadow-sm">
@@ -383,40 +180,96 @@ function CustomerAccount() {
 
               <div className="mt-4 space-y-2">
 
+                {/* ORDERS */}
+
                 <Link
                   to="/account/orders"
                   className="flex items-center justify-between rounded-lg border border-gray-100 p-3 text-sm font-medium text-gray-600 transition hover:border-[#6B1E1E]/20 hover:bg-[#F8F1E7]"
                 >
+
                   <span className="flex items-center gap-3">
-                    <Package size={18} />
+
+                    <Package
+                      size={18}
+                    />
+
                     My Orders
+
                   </span>
 
-                  <ChevronRight size={17} />
+                  <ChevronRight
+                    size={17}
+                  />
+
                 </Link>
+
+                {/* WISHLIST */}
 
                 <Link
                   to="/account/wishlist"
                   className="flex items-center justify-between rounded-lg border border-gray-100 p-3 text-sm font-medium text-gray-600 transition hover:border-[#6B1E1E]/20 hover:bg-[#F8F1E7]"
                 >
+
                   <span className="flex items-center gap-3">
-                    <Heart size={18} />
+
+                    <Heart
+                      size={18}
+                    />
+
                     Wishlist
+
                   </span>
 
-                  <ChevronRight size={17} />
+                  <ChevronRight
+                    size={17}
+                  />
+
                 </Link>
+
+                {/* NOTIFICATIONS */}
 
                 <Link
                   to="/account/notifications"
                   className="flex items-center justify-between rounded-lg border border-gray-100 p-3 text-sm font-medium text-gray-600 transition hover:border-[#6B1E1E]/20 hover:bg-[#F8F1E7]"
                 >
+
                   <span className="flex items-center gap-3">
-                    <Bell size={18} />
+
+                    <Bell
+                      size={18}
+                    />
+
                     Notifications
+
                   </span>
 
-                  <ChevronRight size={17} />
+                  <ChevronRight
+                    size={17}
+                  />
+
+                </Link>
+
+                {/* ADDRESSES */}
+
+                <Link
+                  to="/account/addresses"
+                  className="flex items-center justify-between rounded-lg border border-gray-100 p-3 text-sm font-medium text-gray-600 transition hover:border-[#6B1E1E]/20 hover:bg-[#F8F1E7]"
+                >
+
+                  <span className="flex items-center gap-3">
+
+                    <User
+                      size={18}
+                    />
+
+                    Addresses
+
+                  </span>
+
+                  <ChevronRight
+                    size={17}
+                  />
+
                 </Link>
 
               </div>

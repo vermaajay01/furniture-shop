@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import {
   Link,
   Outlet,
@@ -100,7 +101,7 @@ function AdminLayout() {
   }, []);
 
   // ======================================================
-  // CLOSE MOBILE SIDEBAR AFTER NAVIGATION
+  // CLOSE SIDEBAR AFTER NAVIGATION
   // ======================================================
 
   useEffect(() => {
@@ -114,6 +115,9 @@ function AdminLayout() {
   const handleLogout = async () => {
     try {
       await adminLogout();
+
+      setSidebarOpen(false);
+
       navigate("/admin");
     } catch (error) {
       console.error(
@@ -124,11 +128,13 @@ function AdminLayout() {
   };
 
   // ======================================================
-  // CHECK ACTIVE ROUTE
+  // ACTIVE ROUTE
   // ======================================================
 
   const isActive = (path) => {
-    if (path === "/admin/dashboard") {
+    if (
+      path === "/admin/dashboard"
+    ) {
       return (
         location.pathname ===
         "/admin/dashboard"
@@ -165,6 +171,7 @@ function AdminLayout() {
         }`}
       >
         <span className="flex items-center gap-3">
+
           <Icon
             size={19}
             className={
@@ -175,6 +182,7 @@ function AdminLayout() {
           />
 
           {children}
+
         </span>
 
         {badge > 0 && (
@@ -202,39 +210,46 @@ function AdminLayout() {
     <div className="min-h-screen bg-[#F8F1E7]">
 
       {/* ==================================================
-          MOBILE OVERLAY
+          SIDEBAR BACKDROP
       ================================================== */}
 
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+        <button
+          type="button"
+          aria-label="Close admin sidebar"
           onClick={() =>
             setSidebarOpen(false)
           }
+          className="fixed inset-0 z-40 bg-black/40"
         />
       )}
 
       {/* ==================================================
-          STATIC ADMIN SIDEBAR
+          ADMIN SIDEBAR
       ================================================== */}
 
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-[#6B1E1E]/15 bg-[#F8F1E7] shadow-sm transition-transform duration-300 ${
+        className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-[#6B1E1E]/15 bg-[#F8F1E7] shadow-xl transition-transform duration-300 ${
           sidebarOpen
             ? "translate-x-0"
             : "-translate-x-full"
-        } lg:translate-x-0`}
+        }`}
       >
 
         {/* ==================================================
-            LOGO
+            LOGO + CLOSE
         ================================================== */}
 
         <div className="border-b border-[#6B1E1E]/15 px-6 py-6">
 
           <div className="flex items-start justify-between">
 
-            <Link to="/admin/dashboard">
+            <Link
+              to="/admin/dashboard"
+              onClick={() =>
+                setSidebarOpen(false)
+              }
+            >
 
               <h1 className="text-2xl font-bold tracking-wide text-[#6B1E1E]">
                 हरि{" "}
@@ -253,15 +268,16 @@ function AdminLayout() {
 
             </Link>
 
-            {/* MOBILE CLOSE */}
+            {/* CLOSE */}
 
             <button
               type="button"
               onClick={() =>
                 setSidebarOpen(false)
               }
-              className="rounded-full p-1 text-[#6B1E1E] hover:bg-[#6B1E1E]/10 lg:hidden"
-              aria-label="Close admin menu"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[#6B1E1E] transition hover:bg-[#6B1E1E]/10"
+              aria-label="Close admin sidebar"
+              title="Close sidebar"
             >
               <X size={21} />
             </button>
@@ -271,7 +287,7 @@ function AdminLayout() {
         </div>
 
         {/* ==================================================
-            SIDEBAR NAVIGATION
+            NAVIGATION
         ================================================== */}
 
         <nav className="flex-1 overflow-y-auto px-3 py-6">
@@ -284,16 +300,12 @@ function AdminLayout() {
 
           <div className="space-y-1">
 
-            {/* DASHBOARD */}
-
             <SidebarLink
               to="/admin/dashboard"
               icon={LayoutDashboard}
             >
               Dashboard
             </SidebarLink>
-
-            {/* CUSTOMERS */}
 
             <SidebarLink
               to="/admin/customers"
@@ -302,8 +314,6 @@ function AdminLayout() {
               Customers
             </SidebarLink>
 
-            {/* PRODUCTS */}
-
             <SidebarLink
               to="/admin/products"
               icon={Package}
@@ -311,16 +321,12 @@ function AdminLayout() {
               Products
             </SidebarLink>
 
-            {/* ADD PRODUCT */}
-
             <SidebarLink
               to="/admin/products/add"
               icon={Plus}
             >
               Add Product
             </SidebarLink>
-
-            {/* ORDERS */}
 
             <SidebarLink
               to="/admin/orders"
@@ -330,8 +336,6 @@ function AdminLayout() {
               Orders
             </SidebarLink>
 
-            {/* CUSTOM REQUESTS */}
-
             <SidebarLink
               to="/admin/requests"
               icon={MessageSquare}
@@ -340,18 +344,12 @@ function AdminLayout() {
               Custom Requests
             </SidebarLink>
 
-            {/* NOTIFICATIONS */}
-
             <SidebarLink
               to="/admin/notifications"
               icon={Bell}
             >
               Notifications
             </SidebarLink>
-
-            {/* ==================================================
-                OFFERS - NEW
-            ================================================== */}
 
             <SidebarLink
               to="/admin/offers"
@@ -370,16 +368,12 @@ function AdminLayout() {
 
           <div className="space-y-1">
 
-            {/* VIEW WEBSITE */}
-
             <SidebarLink
               to="/"
               icon={Globe}
             >
               View Website
             </SidebarLink>
-
-            {/* WEBSITE SETTINGS */}
 
             <SidebarLink
               to="/admin/settings"
@@ -406,7 +400,6 @@ function AdminLayout() {
             <LogOut size={19} />
 
             Logout
-
           </button>
 
         </div>
@@ -417,83 +410,59 @@ function AdminLayout() {
           MAIN AREA
       ================================================== */}
 
-      <div className="lg:pl-64">
+      <div>
 
         {/* ==================================================
-            MOBILE TOP BAR
+            TOP BAR
         ================================================== */}
 
-        <header className="sticky top-0 z-30 border-b border-[#6B1E1E]/15 bg-[#F8F1E7]/95 px-5 py-4 shadow-sm backdrop-blur-md lg:hidden">
+        <header className="sticky top-0 z-30 border-b border-[#6B1E1E]/15 bg-[#F8F1E7]/95 px-5 py-4 shadow-sm backdrop-blur-md">
 
           <div className="flex items-center justify-between">
 
-            {/* MENU */}
+            {/* MENU BUTTON */}
 
             <button
               type="button"
               onClick={() =>
                 setSidebarOpen(true)
               }
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#6B1E1E] hover:bg-[#6B1E1E]/10"
-              aria-label="Open admin menu"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[#6B1E1E] transition hover:bg-[#6B1E1E]/10"
+              aria-label="Open admin sidebar"
+              title="Open sidebar"
             >
               <Menu size={23} />
             </button>
 
-            {/* LOGO */}
+            {/* PAGE TITLE */}
 
-            <Link to="/admin/dashboard">
+            <div className="hidden flex-1 px-5 sm:block">
 
-              <h1 className="text-xl font-bold text-[#6B1E1E]">
-                हरि{" "}
-                <span className="text-[#B8863B]">
-                  ॐ
-                </span>
-              </h1>
-
-              <p className="text-center text-[8px] font-medium tracking-[0.3em] text-[#6B1E1E]">
-                FURNITURE HOUSE
+              <p className="text-xs uppercase tracking-[0.3em] text-[#B8863B]">
+                Hari Om Furniture House
               </p>
 
-            </Link>
+              <h2 className="mt-1 text-xl font-bold text-[#6B1E1E]">
+                Admin Panel
+              </h2>
 
-            {/* NOTIFICATIONS */}
+            </div>
 
-            <NotificationBell />
+            {/* MOBILE / DESKTOP ACTIONS */}
 
-          </div>
+            <div className="flex items-center gap-2">
 
-        </header>
+              <NotificationBell />
 
-        {/* ==================================================
-            DESKTOP ADMIN HEADER
-        ================================================== */}
+              <Link
+                to="/admin/settings"
+                title="Website Settings"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-[#6B1E1E] transition hover:bg-[#6B1E1E]/10"
+              >
+                <Settings size={20} />
+              </Link>
 
-        <header className="hidden items-center justify-between border-b border-[#6B1E1E]/15 bg-[#F8F1E7] px-8 py-5 lg:flex">
-
-          <div>
-
-            <p className="text-xs uppercase tracking-[0.3em] text-[#B8863B]">
-              Hari Om Furniture House
-            </p>
-
-            <h2 className="mt-1 text-xl font-bold text-[#6B1E1E]">
-              Admin Panel
-            </h2>
-
-          </div>
-
-          <div className="flex items-center gap-4">
-
-            <NotificationBell />
-
-            <Link
-              to="/admin/settings"
-              title="Website Settings"
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[#6B1E1E] transition hover:bg-[#6B1E1E]/10"
-            >
-              <Settings size={20} />
-            </Link>
+            </div>
 
           </div>
 
