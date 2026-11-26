@@ -34,8 +34,8 @@ const ADMIN_UID =
 // ======================================================
 
 const INACTIVITY_LIMIT =
-  //60 * 60 * 1000; // 1 hour
-  60 * 1000 // testing only
+ 60 * 60 * 1000; // 1 hour
+ 
 
 const ACTIVITY_STORAGE_KEY =
   "hariOmLastActivity";
