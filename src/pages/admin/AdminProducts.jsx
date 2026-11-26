@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -11,6 +12,13 @@ import {
   CheckCircle,
   AlertCircle,
   Globe,
+  Search,
+  X,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUpDown,
+  RefreshCw,
 } from "lucide-react";
 
 import {
@@ -29,6 +37,148 @@ function AdminProducts() {
   const [seeding, setSeeding] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  // ======================================================
+  // PRODUCT MANAGEMENT FILTERS
+  // ======================================================
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [availabilityFilter, setAvailabilityFilter] = useState("all");
+  const [featuredFilter, setFeaturedFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const productsPerPage = 12;
+
+  // ======================================================
+  // DYNAMIC CATEGORIES
+  // ======================================================
+
+  const categories = [
+    "All",
+    ...new Set(
+      products
+        .map((product) =>
+          String(product.category || "").trim()
+        )
+        .filter(Boolean)
+    ),
+  ];
+
+  // ======================================================
+  // FILTER AND SORT PRODUCTS
+  // ======================================================
+
+  const filteredProducts = products
+    .filter((product) => {
+      const term = searchTerm.trim().toLowerCase();
+
+      const matchesSearch =
+        !term ||
+        [
+          product.name,
+          product.category,
+          product.material,
+          product.description,
+          product.id,
+        ].some((value) =>
+          String(value || "")
+            .toLowerCase()
+            .includes(term)
+        );
+
+      const matchesCategory =
+        selectedCategory === "All" ||
+        String(product.category || "").trim() ===
+          selectedCategory;
+
+      const matchesAvailability =
+        availabilityFilter === "all" ||
+        (availabilityFilter === "available" &&
+          product.available !== false) ||
+        (availabilityFilter === "unavailable" &&
+          product.available === false);
+
+      const matchesFeatured =
+        featuredFilter === "all" ||
+        (featuredFilter === "featured" &&
+          product.featured === true) ||
+        (featuredFilter === "regular" &&
+          product.featured !== true);
+
+      return (
+        matchesSearch &&
+        matchesCategory &&
+        matchesAvailability &&
+        matchesFeatured
+      );
+    })
+    .sort((a, b) => {
+      if (sortBy === "name-asc") {
+        return String(a.name || "").localeCompare(
+          String(b.name || "")
+        );
+      }
+
+      if (sortBy === "name-desc") {
+        return String(b.name || "").localeCompare(
+          String(a.name || "")
+        );
+      }
+
+      if (sortBy === "price-low") {
+        return (
+          Number(a.price || 0) -
+          Number(b.price || 0)
+        );
+      }
+
+      if (sortBy === "price-high") {
+        return (
+          Number(b.price || 0) -
+          Number(a.price || 0)
+        );
+      }
+
+      if (sortBy === "category") {
+        return String(a.category || "").localeCompare(
+          String(b.category || "")
+        );
+      }
+
+      return 0;
+    });
+
+  // ======================================================
+  // PAGINATION
+  // ======================================================
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredProducts.length / productsPerPage)
+  );
+
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * productsPerPage,
+    currentPage * productsPerPage
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    searchTerm,
+    selectedCategory,
+    availabilityFilter,
+    featuredFilter,
+    sortBy,
+  ]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   // ======================================================
   // INITIAL PRODUCTS
@@ -102,11 +252,12 @@ function AdminProducts() {
         collection(db, "products")
       );
 
-      const productList =
-        snapshot.docs.map((item) => ({
+      const productList = snapshot.docs.map(
+        (item) => ({
           id: item.id,
           ...item.data(),
-        }));
+        })
+      );
 
       setProducts(productList);
     } catch (err) {
@@ -136,29 +287,24 @@ function AdminProducts() {
 
       const batch = writeBatch(db);
 
-      defaultProducts.forEach(
-        (product) => {
-          const productRef = doc(
-            db,
-            "products",
-            product.id
-          );
+      defaultProducts.forEach((product) => {
+        const productRef = doc(
+          db,
+          "products",
+          product.id
+        );
 
-          batch.set(productRef, {
-            name: product.name,
-            category: product.category,
-            price: product.price,
-            material: product.material,
-            image: product.image,
-            description:
-              product.description,
-            featured:
-              product.featured,
-            available:
-              product.available,
-          });
-        }
-      );
+        batch.set(productRef, {
+          name: product.name,
+          category: product.category,
+          price: product.price,
+          material: product.material,
+          image: product.image,
+          description: product.description,
+          featured: product.featured,
+          available: product.available,
+        });
+      });
 
       await batch.commit();
 
@@ -182,13 +328,10 @@ function AdminProducts() {
   // DELETE PRODUCT
   // ======================================================
 
-  const deleteProduct = async (
-    productId
-  ) => {
-    const confirmed =
-      window.confirm(
-        "Are you sure you want to delete this product?"
-      );
+  const deleteProduct = async (productId) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this product?"
+    );
 
     if (!confirmed) {
       return;
@@ -199,17 +342,12 @@ function AdminProducts() {
       setMessage("");
 
       await deleteDoc(
-        doc(
-          db,
-          "products",
-          productId
-        )
+        doc(db, "products", productId)
       );
 
       setProducts((previous) =>
         previous.filter(
-          (product) =>
-            product.id !== productId
+          (product) => product.id !== productId
         )
       );
 
@@ -232,6 +370,18 @@ function AdminProducts() {
   const clearMessages = () => {
     setMessage("");
     setError("");
+  };
+
+  // ======================================================
+  // CLEAR FILTERS
+  // ======================================================
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSelectedCategory("All");
+    setAvailabilityFilter("all");
+    setFeaturedFilter("all");
+    setSortBy("newest");
   };
 
   // ======================================================
@@ -296,9 +446,11 @@ function AdminProducts() {
               className="flex items-center gap-2 rounded-md bg-[#6B1E1E] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#8B2E2E]"
             >
               <Plus size={18} />
+
               <span className="hidden sm:inline">
                 Add Product
               </span>
+
               <span className="sm:hidden">
                 Add
               </span>
@@ -419,11 +571,200 @@ function AdminProducts() {
         </div>
 
         {/* ==================================================
+            SEARCH AND PRODUCT FILTERS
+        ================================================== */}
+
+        {!loading && products.length > 0 && (
+          <section className="mb-8 space-y-5">
+
+            {/* SEARCH, AVAILABILITY, FEATURED AND SORT */}
+
+            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px_190px_190px]">
+
+              <div className="relative">
+
+                <Search
+                  size={18}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                />
+
+                <input
+                  type="search"
+                  value={searchTerm}
+                  onChange={(event) =>
+                    setSearchTerm(event.target.value)
+                  }
+                  placeholder="Search name, category, material or product ID..."
+                  className="w-full border border-[#6B1E1E]/15 bg-white py-3 pl-11 pr-10 text-sm outline-none transition focus:border-[#8B2E2E]"
+                />
+
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#6B1E1E]"
+                    aria-label="Clear search"
+                  >
+                    <X size={17} />
+                  </button>
+                )}
+
+              </div>
+
+              <label className="flex items-center gap-2 border border-[#6B1E1E]/15 bg-white px-3">
+
+                <Filter
+                  size={16}
+                  className="shrink-0 text-[#8B2E2E]"
+                />
+
+                <select
+                  value={availabilityFilter}
+                  onChange={(event) =>
+                    setAvailabilityFilter(event.target.value)
+                  }
+                  className="w-full bg-transparent py-3 text-sm text-gray-700 outline-none"
+                  aria-label="Filter by availability"
+                >
+                  <option value="all">All availability</option>
+                  <option value="available">Available</option>
+                  <option value="unavailable">Unavailable</option>
+                </select>
+
+              </label>
+
+              <select
+                value={featuredFilter}
+                onChange={(event) =>
+                  setFeaturedFilter(event.target.value)
+                }
+                className="border border-[#6B1E1E]/15 bg-white px-3 py-3 text-sm text-gray-700 outline-none focus:border-[#8B2E2E]"
+                aria-label="Filter by featured status"
+              >
+                <option value="all">All products</option>
+                <option value="featured">Featured only</option>
+                <option value="regular">Regular products</option>
+              </select>
+
+              <label className="flex items-center gap-2 border border-[#6B1E1E]/15 bg-white px-3">
+
+                <ArrowUpDown
+                  size={16}
+                  className="shrink-0 text-[#8B2E2E]"
+                />
+
+                <select
+                  value={sortBy}
+                  onChange={(event) =>
+                    setSortBy(event.target.value)
+                  }
+                  className="w-full bg-transparent py-3 text-sm text-gray-700 outline-none"
+                  aria-label="Sort products"
+                >
+                  <option value="newest">Default order</option>
+                  <option value="name-asc">Name: A to Z</option>
+                  <option value="name-desc">Name: Z to A</option>
+                  <option value="price-low">Price: Low to high</option>
+                  <option value="price-high">Price: High to low</option>
+                  <option value="category">Category</option>
+                </select>
+
+              </label>
+
+            </div>
+
+            {/* CATEGORY FILTERS */}
+
+            <div>
+
+              <div className="mb-3 flex items-center justify-between gap-3">
+
+                <h3 className="font-semibold text-[#6B1E1E]">
+                  Browse by category
+                </h3>
+
+                <span className="text-xs text-gray-500">
+                  {filteredProducts.length} of {products.length} products
+                </span>
+
+              </div>
+
+              <div className="flex gap-2 overflow-x-auto pb-2">
+
+                {categories.map((category) => {
+
+                  const count =
+                    category === "All"
+                      ? products.length
+                      : products.filter(
+                          (product) =>
+                            String(product.category || "").trim() ===
+                            category
+                        ).length;
+
+                  return (
+                    <button
+                      key={category}
+                      type="button"
+                      onClick={() =>
+                        setSelectedCategory(category)
+                      }
+                      className={`shrink-0 border px-4 py-2 text-sm font-medium transition ${
+                        selectedCategory === category
+                          ? "border-[#6B1E1E] bg-[#6B1E1E] text-white"
+                          : "border-[#6B1E1E]/15 bg-white text-[#6B1E1E] hover:bg-[#F8E8C8]"
+                      }`}
+                    >
+                      {category}
+
+                      <span className="ml-2 text-xs opacity-75">
+                        {count}
+                      </span>
+
+                    </button>
+                  );
+                })}
+
+              </div>
+
+            </div>
+
+            {/* CLEAR FILTERS */}
+
+            {(searchTerm ||
+              selectedCategory !== "All" ||
+              availabilityFilter !== "all" ||
+              featuredFilter !== "all" ||
+              sortBy !== "newest") && (
+
+              <div className="flex flex-wrap items-center justify-between gap-3 border border-[#6B1E1E]/10 bg-white px-4 py-3">
+
+                <p className="text-sm text-gray-600">
+                  Showing {filteredProducts.length} matching products
+                </p>
+
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="flex items-center gap-2 text-sm font-semibold text-[#8B2E2E] hover:underline"
+                >
+                  <RefreshCw size={15} />
+                  Clear filters
+                </button>
+
+              </div>
+            )}
+
+          </section>
+        )}
+
+        {/* ==================================================
             DATABASE SETUP
         ================================================== */}
 
         {products.length === 0 &&
           !loading && (
+
             <div className="mb-10 overflow-hidden bg-[#6B1E1E]">
 
               <div className="p-7 md:p-8">
@@ -479,6 +820,7 @@ function AdminProducts() {
         ================================================== */}
 
         {loading && (
+
           <div className="bg-white py-20 text-center shadow-sm">
 
             <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-[#6B1E1E]/20 border-t-[#6B1E1E]" />
@@ -496,6 +838,7 @@ function AdminProducts() {
 
         {!loading &&
           products.length === 0 && (
+
             <div className="bg-white p-12 text-center shadow-sm">
 
               <Package
@@ -525,11 +868,47 @@ function AdminProducts() {
           )}
 
         {/* ==================================================
+            NO FILTER RESULTS
+        ================================================== */}
+
+        {!loading &&
+          products.length > 0 &&
+          filteredProducts.length === 0 && (
+
+            <div className="bg-white px-6 py-16 text-center shadow-sm">
+
+              <Package
+                size={42}
+                className="mx-auto text-gray-300"
+              />
+
+              <h3 className="mt-4 text-xl font-bold text-[#6B1E1E]">
+                No matching products
+              </h3>
+
+              <p className="mt-2 text-sm text-gray-500">
+                Try another search term or clear your filters.
+              </p>
+
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="mt-5 inline-flex items-center gap-2 bg-[#6B1E1E] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#8B2E2E]"
+              >
+                <RefreshCw size={16} />
+                Reset filters
+              </button>
+
+            </div>
+          )}
+
+        {/* ==================================================
             PRODUCTS DESKTOP
         ================================================== */}
 
         {!loading &&
-          products.length > 0 && (
+          filteredProducts.length > 0 && (
+
             <div className="hidden overflow-hidden bg-white shadow-sm md:block">
 
               <div className="overflow-x-auto">
@@ -566,147 +945,126 @@ function AdminProducts() {
 
                   <tbody>
 
-                    {products.map(
-                      (product) => (
-                        <tr
-                          key={
-                            product.id
-                          }
-                          className="border-b border-gray-100 last:border-0 hover:bg-[#F8F1E7]/50"
-                        >
+                    {paginatedProducts.map((product) => (
 
-                          {/* PRODUCT */}
+                      <tr
+                        key={product.id}
+                        className="border-b border-gray-100 last:border-0 hover:bg-[#F8F1E7]/50"
+                      >
 
-                          <td className="px-6 py-5">
+                        {/* PRODUCT */}
 
-                            <div className="flex items-center gap-4">
+                        <td className="px-6 py-5">
 
-                              <img
-                                src={
-                                  product.image
-                                }
-                                alt={
-                                  product.name
-                                }
-                                className="h-16 w-16 object-cover"
-                              />
+                          <div className="flex items-center gap-4">
 
-                              <div>
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="h-16 w-16 object-cover"
+                              loading="lazy"
+                            />
 
-                                <p className="font-semibold text-[#6B1E1E]">
-                                  {
-                                    product.name
-                                  }
-                                </p>
+                            <div>
 
-                                <p className="mt-1 text-xs text-gray-500">
-                                  {
-                                    product.material
-                                  }
-                                </p>
+                              <p className="font-semibold text-[#6B1E1E]">
+                                {product.name}
+                              </p>
 
-                              </div>
+                              <p className="mt-1 text-xs text-gray-500">
+                                {product.material}
+                              </p>
 
                             </div>
 
-                          </td>
+                          </div>
 
-                          {/* CATEGORY */}
+                        </td>
 
-                          <td className="px-6 py-5">
+                        {/* CATEGORY */}
 
-                            <span className="text-sm text-gray-600">
-                              {
-                                product.category
-                              }
+                        <td className="px-6 py-5">
+
+                          <span className="text-sm text-gray-600">
+                            {product.category}
+                          </span>
+
+                        </td>
+
+                        {/* PRICE */}
+
+                        <td className="px-6 py-5">
+
+                          <span className="font-semibold text-[#8B2E2E]">
+                            ₹
+                            {Number(
+                              product.price || 0
+                            ).toLocaleString("en-IN")}
+                          </span>
+
+                        </td>
+
+                        {/* STATUS */}
+
+                        <td className="px-6 py-5">
+
+                          <div className="flex flex-col gap-2">
+
+                            <span
+                              className={`w-fit px-3 py-1 text-xs font-medium ${
+                                product.available === false
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-green-100 text-green-700"
+                              }`}
+                            >
+                              {product.available === false
+                                ? "Unavailable"
+                                : "Available"}
                             </span>
 
-                          </td>
+                            {product.featured && (
 
-                          {/* PRICE */}
-
-                          <td className="px-6 py-5">
-
-                            <span className="font-semibold text-[#8B2E2E]">
-                              ₹
-                              {Number(
-                                product.price ||
-                                  0
-                              ).toLocaleString(
-                                "en-IN"
-                              )}
-                            </span>
-
-                          </td>
-
-                          {/* STATUS */}
-
-                          <td className="px-6 py-5">
-
-                            <div className="flex flex-col gap-2">
-
-                              <span
-                                className={`w-fit px-3 py-1 text-xs font-medium ${
-                                  product.available ===
-                                  false
-                                    ? "bg-red-100 text-red-700"
-                                    : "bg-green-100 text-green-700"
-                                }`}
-                              >
-                                {product.available ===
-                                false
-                                  ? "Unavailable"
-                                  : "Available"}
+                              <span className="w-fit bg-[#F8E8C8] px-3 py-1 text-xs font-medium text-[#7A571E]">
+                                Featured
                               </span>
+                            )}
 
-                              {product.featured && (
-                                <span className="w-fit bg-[#F8E8C8] px-3 py-1 text-xs font-medium text-[#7A571E]">
-                                  Featured
-                                </span>
-                              )}
+                          </div>
 
-                            </div>
+                        </td>
 
-                          </td>
+                        {/* ACTIONS */}
 
-                          {/* ACTIONS */}
+                        <td className="px-6 py-5">
 
-                          <td className="px-6 py-5">
+                          <div className="flex justify-end gap-2">
 
-                            <div className="flex justify-end gap-2">
+                            <Link
+                              to={`/admin/products/edit/${product.id}`}
+                              className="flex items-center gap-2 border border-[#8B2E2E]/20 px-3 py-2 text-sm text-[#8B2E2E] transition hover:bg-[#8B2E2E] hover:text-white"
+                            >
+                              <Pencil size={16} />
+                              Edit
+                            </Link>
 
-                              <Link
-                                to={`/admin/products/edit/${product.id}`}
-                                className="flex items-center gap-2 border border-[#8B2E2E]/20 px-3 py-2 text-sm text-[#8B2E2E] transition hover:bg-[#8B2E2E] hover:text-white"
-                              >
-                                <Pencil
-                                  size={16}
-                                />
-                                Edit
-                              </Link>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                deleteProduct(product.id)
+                              }
+                              className="flex items-center gap-2 border border-red-200 px-3 py-2 text-sm text-red-600 transition hover:bg-red-600 hover:text-white"
+                            >
+                              <Trash2 size={16} />
+                              Delete
+                            </button>
 
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  deleteProduct(
-                                    product.id
-                                  )
-                                }
-                                className="flex items-center gap-2 border border-red-200 px-3 py-2 text-sm text-red-600 transition hover:bg-red-600 hover:text-white"
-                              >
-                                <Trash2
-                                  size={16}
-                                />
-                                Delete
-                              </button>
+                          </div>
 
-                            </div>
+                        </td>
 
-                          </td>
+                      </tr>
 
-                        </tr>
-                      )
-                    )}
+                    ))}
 
                   </tbody>
 
@@ -722,135 +1080,192 @@ function AdminProducts() {
         ================================================== */}
 
         {!loading &&
-          products.length > 0 && (
+          filteredProducts.length > 0 && (
+
             <div className="space-y-4 md:hidden">
 
-              {products.map(
-                (product) => (
-                  <div
-                    key={product.id}
-                    className="bg-white p-5 shadow-sm"
-                  >
+              {paginatedProducts.map((product) => (
 
-                    {/* PRODUCT TOP */}
+                <div
+                  key={product.id}
+                  className="bg-white p-5 shadow-sm"
+                >
 
-                    <div className="flex gap-4">
+                  {/* PRODUCT TOP */}
 
-                      <img
-                        src={
-                          product.image
-                        }
-                        alt={
-                          product.name
-                        }
-                        className="h-20 w-20 shrink-0 object-cover"
-                      />
+                  <div className="flex gap-4">
 
-                      <div className="min-w-0 flex-1">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="h-20 w-20 shrink-0 object-cover"
+                      loading="lazy"
+                    />
 
-                        <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
 
-                          <div>
+                      <div className="flex items-start justify-between gap-3">
 
-                            <h3 className="font-semibold text-[#6B1E1E]">
-                              {
-                                product.name
-                              }
-                            </h3>
+                        <div>
 
-                            <p className="mt-1 text-xs text-gray-500">
-                              {
-                                product.material
-                              }
-                            </p>
+                          <h3 className="font-semibold text-[#6B1E1E]">
+                            {product.name}
+                          </h3>
 
-                          </div>
-
-                          <p className="shrink-0 font-bold text-[#8B2E2E]">
-                            ₹
-                            {Number(
-                              product.price ||
-                                0
-                            ).toLocaleString(
-                              "en-IN"
-                            )}
+                          <p className="mt-1 text-xs text-gray-500">
+                            {product.material}
                           </p>
 
                         </div>
 
-                        <p className="mt-3 text-xs text-gray-500">
-                          Category:{" "}
-                          <span className="font-medium text-gray-700">
-                            {
-                              product.category
-                            }
-                          </span>
+                        <p className="shrink-0 font-bold text-[#8B2E2E]">
+                          ₹
+                          {Number(
+                            product.price || 0
+                          ).toLocaleString("en-IN")}
                         </p>
 
                       </div>
 
-                    </div>
-
-                    {/* STATUS */}
-
-                    <div className="mt-5 flex flex-wrap gap-2">
-
-                      <span
-                        className={`px-3 py-1 text-xs font-medium ${
-                          product.available ===
-                          false
-                            ? "bg-red-100 text-red-700"
-                            : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {product.available ===
-                        false
-                          ? "Unavailable"
-                          : "Available"}
-                      </span>
-
-                      {product.featured && (
-                        <span className="bg-[#F8E8C8] px-3 py-1 text-xs font-medium text-[#7A571E]">
-                          Featured
+                      <p className="mt-3 text-xs text-gray-500">
+                        Category:{" "}
+                        <span className="font-medium text-gray-700">
+                          {product.category}
                         </span>
-                      )}
-
-                    </div>
-
-                    {/* ACTIONS */}
-
-                    <div className="mt-5 grid grid-cols-2 gap-2">
-
-                      <Link
-                        to={`/admin/products/edit/${product.id}`}
-                        className="flex items-center justify-center gap-2 border border-[#8B2E2E]/20 py-2.5 text-sm font-medium text-[#8B2E2E] transition hover:bg-[#8B2E2E] hover:text-white"
-                      >
-                        <Pencil
-                          size={16}
-                        />
-                        Edit
-                      </Link>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          deleteProduct(
-                            product.id
-                          )
-                        }
-                        className="flex items-center justify-center gap-2 border border-red-200 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-600 hover:text-white"
-                      >
-                        <Trash2
-                          size={16}
-                        />
-                        Delete
-                      </button>
+                      </p>
 
                     </div>
 
                   </div>
-                )
-              )}
+
+                  {/* STATUS */}
+
+                  <div className="mt-5 flex flex-wrap gap-2">
+
+                    <span
+                      className={`px-3 py-1 text-xs font-medium ${
+                        product.available === false
+                          ? "bg-red-100 text-red-700"
+                          : "bg-green-100 text-green-700"
+                      }`}
+                    >
+                      {product.available === false
+                        ? "Unavailable"
+                        : "Available"}
+                    </span>
+
+                    {product.featured && (
+
+                      <span className="bg-[#F8E8C8] px-3 py-1 text-xs font-medium text-[#7A571E]">
+                        Featured
+                      </span>
+                    )}
+
+                  </div>
+
+                  {/* ACTIONS */}
+
+                  <div className="mt-5 grid grid-cols-2 gap-2">
+
+                    <Link
+                      to={`/admin/products/edit/${product.id}`}
+                      className="flex items-center justify-center gap-2 border border-[#8B2E2E]/20 py-2.5 text-sm font-medium text-[#8B2E2E] transition hover:bg-[#8B2E2E] hover:text-white"
+                    >
+                      <Pencil size={16} />
+                      Edit
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        deleteProduct(product.id)
+                      }
+                      className="flex items-center justify-center gap-2 border border-red-200 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-600 hover:text-white"
+                    >
+                      <Trash2 size={16} />
+                      Delete
+                    </button>
+
+                  </div>
+
+                </div>
+
+              ))}
+
+            </div>
+          )}
+
+        {/* ==================================================
+            PAGINATION
+        ================================================== */}
+
+        {!loading &&
+          filteredProducts.length > 0 && (
+
+            <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-[#6B1E1E]/10 pt-5 sm:flex-row">
+
+              <p className="text-sm text-gray-500">
+
+                Showing{" "}
+
+                <span className="font-semibold text-[#6B1E1E]">
+                  {(currentPage - 1) * productsPerPage + 1}
+                </span>
+
+                {" "}to{" "}
+
+                <span className="font-semibold text-[#6B1E1E]">
+                  {Math.min(
+                    currentPage * productsPerPage,
+                    filteredProducts.length
+                  )}
+                </span>
+
+                {" "}of{" "}
+
+                <span className="font-semibold text-[#6B1E1E]">
+                  {filteredProducts.length}
+                </span>
+
+                {" "}products
+
+              </p>
+
+              <div className="flex items-center gap-2">
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage((page) =>
+                      Math.max(1, page - 1)
+                    )
+                  }
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-1 border border-[#6B1E1E]/20 px-3 py-2 text-sm text-[#6B1E1E] transition hover:bg-[#6B1E1E] hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[#6B1E1E]"
+                >
+                  <ChevronLeft size={16} />
+                  Previous
+                </button>
+
+                <span className="px-3 text-sm font-medium text-[#6B1E1E]">
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage((page) =>
+                      Math.min(totalPages, page + 1)
+                    )
+                  }
+                  disabled={currentPage === totalPages}
+                  className="flex items-center gap-1 border border-[#6B1E1E]/20 px-3 py-2 text-sm text-[#6B1E1E] transition hover:bg-[#6B1E1E] hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[#6B1E1E]"
+                >
+                  Next
+                  <ChevronRight size={16} />
+                </button>
+
+              </div>
 
             </div>
           )}
